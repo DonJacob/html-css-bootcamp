@@ -7,6 +7,24 @@ angular size inside the field your rig actually delivers.
 Open `index.html` in any browser — phone, tablet or desktop. No build step, no dependencies,
 one self-contained file.
 
+## Sections
+
+**The eyepiece view** — a live field circle with the selected target drawn at true angular
+size, a scale bar, and a magnified detail inset for targets far smaller than the field.
+
+**Controls** — 23 targets in five categories (solar system, galaxies, nebulae, clusters,
+double stars), telescope and eyepiece presets, a barlow/reducer strip from 0.5× to 3×, and
+every value editable by slider or typed number.
+
+**The light path** — an optical schematic that redraws as you change the controls. The
+objective scales with aperture, the light cone angle follows the focal ratio, a barlow or
+reducer appears in the cone when one is fitted, and the exit pupil is drawn at true size
+against a 7 mm dark-adapted eye. Below it, every parameter and every derived value.
+
+**What fits in this field** — the whole selected category rendered as thumbnails in your
+current field, each labelled with its angular size and how much of the field it fills, so
+you can see at a glance which objects your rig frames and which overflow it.
+
 ## What it models
 
 | Value | Formula |
@@ -26,6 +44,19 @@ every star drawn — which is why ε Lyrae's pairs merge below roughly 50 mm and
 Targets whose interesting detail is far smaller than the field get a magnified inset drawn
 with the same physics, because the canvas resolves much less angular detail than an eye at a
 real eyepiece.
+
+## Targets
+
+| Category | Objects |
+| --- | --- |
+| Solar system | Moon, Jupiter, Saturn, Mars, Venus |
+| Galaxies | M31 Andromeda, M33 Triangulum, M51 Whirlpool, M81 Bode's, M104 Sombrero |
+| Nebulae | M42 Orion, Veil, North America, M8 Lagoon, M16 Eagle, M27 Dumbbell, M57 Ring |
+| Clusters | M45 Pleiades, M44 Beehive, Double Cluster, M13 Hercules |
+| Double stars | Albireo, ε Lyrae |
+
+Every object is drawn procedurally on canvas — no image files — at its real angular size,
+from Saturn's 44″ rings to the Veil's 3° shell.
 
 ## Caveats
 

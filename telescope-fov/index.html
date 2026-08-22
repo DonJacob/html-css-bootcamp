@@ -260,6 +260,73 @@ input[type=range]::-moz-range-thumb{
 .pill.warn{color:var(--accent-ink)}
 .pill.bad{color:var(--alert)}
 
+/* ---------- category filter ---------- */
+.cats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.cat{
+  border:1px solid transparent;background:transparent;color:var(--ink-3);
+  font:inherit;font-size:12px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;padding:5px 9px;border-radius:7px;cursor:pointer;
+}
+.cat:hover{color:var(--ink-2)}
+.cat[aria-pressed="true"]{
+  color:var(--accent-ink);border-color:var(--accent);background:var(--accent-soft);
+}
+
+/* ---------- optical schematic ---------- */
+.sch-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -14px;padding:0 14px 4px}
+.sch-scroll svg{display:block;width:100%;min-width:660px;height:auto}
+.sch-line{stroke:var(--ink-3);stroke-width:1.2;fill:none}
+.sch-glass{fill:var(--accent);fill-opacity:.22;stroke:var(--accent);stroke-width:1.4}
+.sch-ray{stroke:var(--accent);stroke-width:1.1;fill:none;opacity:.7}
+.sch-cone{fill:var(--accent);fill-opacity:.10;stroke:none}
+.sch-eye-cone{fill:var(--accent);fill-opacity:.07;stroke:none}
+.sch-dim{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:4 3;fill:none}
+.sch-solid{stroke:var(--ink-3);stroke-width:1;fill:none}
+.sch-txt{fill:var(--ink-2);font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;font-weight:500}
+.sch-key{fill:var(--ink-3);font-family:"IBM Plex Sans",sans-serif;font-size:9.5px;font-weight:600;letter-spacing:.11em}
+.sch-hot{fill:var(--accent-ink);font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;font-weight:500}
+.sch-note{margin:8px 0 0;font-size:12px;color:var(--ink-3);max-width:66ch}
+.sch-swipe{display:none;margin:0 0 8px;font-size:11.5px;color:var(--ink-3)}
+@media (max-width:760px){.sch-swipe{display:block}}
+
+.params{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));
+  gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);
+  border-radius:11px;overflow:hidden;margin-top:14px;
+}
+.param{background:var(--surface);padding:9px 10px}
+.param .pk{display:block;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.param .pv{
+  display:block;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:16px;
+  font-weight:500;font-variant-numeric:tabular-nums;margin-top:2px;
+}
+.param.derived{background:var(--surface-2)}
+.param.derived .pv{color:var(--accent-ink)}
+
+/* ---------- gallery ---------- */
+.gallery{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));
+  gap:10px;
+}
+.gcard{
+  display:flex;flex-direction:column;gap:5px;align-items:stretch;
+  background:transparent;border:1px solid var(--line);border-radius:11px;
+  padding:7px 7px 9px;cursor:pointer;font:inherit;text-align:left;
+  transition:border-color .15s,background .15s;
+}
+.gcard:hover{border-color:var(--ink-3)}
+.gcard[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.gcard canvas{width:100%;height:auto;aspect-ratio:1/1;border-radius:8px;display:block}
+.gcard .gn{font-size:12px;font-weight:600;color:var(--ink);line-height:1.25}
+.gcard .gs{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;
+  color:var(--ink-3);font-variant-numeric:tabular-nums;
+}
+.gcard .gf{font-size:10.5px;font-weight:600}
+.gf.ok{color:var(--good)}
+.gf.warn{color:var(--accent-ink)}
+.gf.bad{color:var(--alert)}
+
 details{margin-top:14px;border-top:1px solid var(--line-soft);padding-top:10px}
 summary{
   cursor:pointer;font-size:12px;font-weight:600;letter-spacing:.1em;
@@ -318,6 +385,7 @@ footer p{margin:0 0 7px}
 
       <section class="panel" aria-labelledby="h-target">
         <div class="panel-h"><h2 id="h-target">Point it at</h2><span class="aside" id="target-size">—</span></div>
+        <div class="cats" id="cats" role="group" aria-label="Object category"></div>
         <div class="chips" id="chips" role="group" aria-label="Target object"></div>
         <p class="chip-note" id="target-note"></p>
       </section>
@@ -397,13 +465,28 @@ useful magnification= aperture ÷ 7  …up to…  aperture × 2</code>
         </details>
       </section>
 
-      <footer>
-        <p><b>A caveat worth knowing.</b> True field here is the classic <code>AFOV ÷ magnification</code> estimate. The exact answer uses the eyepiece's field stop diameter, which manufacturers don't always publish; the approximation runs a few percent optimistic on wide-angle eyepieces.</p>
-        <p>Angular sizes are real: the Moon 31′, Jupiter's disc 40″, Saturn's rings 44″ tip to tip, M31 nearly 3° end to end. Star fields are representative, not a survey catalogue. Never point a telescope at the Sun.</p>
-      </footer>
-
     </div>
   </div>
+
+  <!-- ======= OPTICAL SCHEMATIC ======= -->
+  <section class="panel" aria-labelledby="h-sch">
+    <div class="panel-h"><h2 id="h-sch">The light path</h2><span class="aside" id="sch-aside">—</span></div>
+    <p class="sch-swipe">Swipe the diagram sideways to follow the light all the way to the eye.</p>
+    <div class="sch-scroll"><svg id="schematic" viewBox="0 0 700 262" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="sch-desc"><title id="sch-desc">Optical schematic of the current telescope, barlow and eyepiece</title></svg></div>
+    <p class="sch-note">Lengths are compressed to fit — but the cone angle really does follow the focal ratio, the objective really does scale with aperture, and the exit pupil circle is drawn at its true size against a 7 mm dark-adapted eye. Shaded cells below are the values derived from the four you set.</p>
+    <div class="params" id="params"></div>
+  </section>
+
+  <!-- ======= GALLERY ======= -->
+  <section class="panel" aria-labelledby="h-gal">
+    <div class="panel-h"><h2 id="h-gal">What fits in this field</h2><span class="aside" id="gal-aside">—</span></div>
+    <div class="gallery" id="gallery" role="group" aria-label="Targets in the current field"></div>
+  </section>
+
+  <footer>
+    <p><b>A caveat worth knowing.</b> True field here is the classic <code>AFOV ÷ magnification</code> estimate. The exact answer uses the eyepiece's field stop diameter, which manufacturers don't always publish; the approximation runs a few percent optimistic on wide-angle eyepieces.</p>
+    <p>Angular sizes are real: the Moon 31′, Jupiter's disc 40″, Saturn's rings 44″ tip to tip, M31 nearly 3° end to end. Star fields are representative, not a survey catalogue. Never point a telescope at the Sun.</p>
+  </footer>
 </div>
 
 <script>
@@ -734,12 +817,13 @@ function drawM31(g){
   cloud(g, 0, 0, 52, 15, rot, "228,218,192", 0.26);
   cloud(g, 0, 0, 20,  8, rot, "244,238,216", 0.36);
   cloud(g, 0, 0,  6,  4, rot, "255,252,238", 0.55);
-  /* dust lanes */
-  g.save(); g.translate(0,0); g.rotate(rot);
-  g.fillStyle = "rgba(6,9,18,.26)";
-  g.beginPath(); g.ellipse(-px(14), -px(6), px(56), px(3.2), 0.06, 0, 6.2832); g.fill();
-  g.fillStyle = "rgba(6,9,18,.20)";
-  g.beginPath(); g.ellipse(-px(20), -px(11), px(44), px(2.4), 0.06, 0, 6.2832); g.fill();
+  /* dust lanes — kept inside the disc, and blurred so they read as dust, not paint */
+  g.save(); g.rotate(rot);
+  if (CAN_BLUR) g.filter = "blur(" + Math.max(0.8, px(1.6)).toFixed(2) + "px)";
+  g.fillStyle = "rgba(6,9,18,.30)";
+  g.beginPath(); g.ellipse(-px(10), -px(5.5), px(38), px(2.6), 0.05, 0, 6.2832); g.fill();
+  g.fillStyle = "rgba(6,9,18,.22)";
+  g.beginPath(); g.ellipse(-px(16), -px(10), px(28), px(2.0), 0.05, 0, 6.2832); g.fill();
   g.restore();
   /* companions */
   cloud(g, px(24), px(-20), 4.5, 3.6, 0, "232,226,204", 0.32);       /* M32 */
@@ -761,7 +845,8 @@ function drawM45(g){
 function drawM13(g){
   cloud(g, 0, 0, 11, 11, 0, "228,224,206", 0.20);
   const r = rng(1313);
-  for (let i = 0; i < 900; i++){
+  const n = CTX.thumb ? 220 : 900;
+  for (let i = 0; i < n; i++){
     const ang = r()*6.2832;
     const rad = 10.5 * Math.pow(r(), 2.3);
     const m = 11.4 + r()*3.2 - (1 - rad/10.5)*1.4;
@@ -816,30 +901,304 @@ function drawDoubleDouble(g){
   drawPair(g, px( 0.25), px( 1.72), sep, 0.25, 5.2, 5.5, 0.58, 0.55);
 }
 
+/* --- generic building blocks shared by the deep-sky renderers --- */
+
+/* Canvas blur turns hard geometry into nebulosity. Everything degrades to a
+   crisp-edged but still correct shape where it isn't supported. */
+const CAN_BLUR = (function(){
+  try {
+    const c = document.createElement("canvas").getContext("2d");
+    c.filter = "blur(2px)";
+    return c.filter === "blur(2px)";
+  } catch (e){ return false; }
+})();
+
+function poly(g, pts){
+  g.beginPath();
+  pts.forEach(function(pt, i){
+    if (i) g.lineTo(px(pt[0]), px(pt[1])); else g.moveTo(px(pt[0]), px(pt[1]));
+  });
+  g.closePath();
+}
+
+/* soft dot in the CURRENT transform space (pixels), so it squashes with ctx.scale */
+function soft(g, x, y, rpx, rgb, alpha){
+  if (rpx < 0.25 || alpha <= 0.004) return;
+  const grd = g.createRadialGradient(x, y, 0, x, y, rpx);
+  grd.addColorStop(0,   "rgba(" + rgb + "," + alpha + ")");
+  grd.addColorStop(0.5, "rgba(" + rgb + "," + (alpha*0.45) + ")");
+  grd.addColorStop(1,   "rgba(" + rgb + ",0)");
+  g.fillStyle = grd;
+  g.beginPath(); g.arc(x, y, rpx, 0, 6.2832); g.fill();
+}
+
+/* face-on / inclined spiral: halo, arms, bulge */
+function spiralGalaxy(g, rxAm, ryAm, rot, arms, turns, rgb, coreRgb, alpha){
+  const rx = px(rxAm), ry = px(ryAm);
+  if (rx < 1.2){ soft(g, 0, 0, Math.max(0.9, rx*1.6), coreRgb, alpha*1.4); return; }
+  g.save(); g.rotate(rot); g.scale(1, ry/rx);
+  soft(g, 0, 0, rx,        rgb, alpha*0.50);
+  soft(g, 0, 0, rx*0.58,   rgb, alpha*0.62);
+  if (rx > 7){
+    for (let a = 0; a < arms; a++){
+      const off = a * 6.2832 / arms;
+      for (let i = 5; i <= 30; i++){
+        const t = i/30, ang = off + t*turns*6.2832, rr = rx*t;
+        soft(g, Math.cos(ang)*rr, Math.sin(ang)*rr,
+             rx*0.11*(1.15 - t*0.45), rgb, alpha*0.46*(1 - t*0.55));
+      }
+    }
+  }
+  soft(g, 0, 0, rx*0.20, coreRgb, alpha*1.5);
+  soft(g, 0, 0, rx*0.07, coreRgb, alpha*2.0);
+  g.restore();
+}
+
+/* a filament traced along a circular arc — the Veil is nothing but these */
+function filament(g, cxAm, cyAm, radAm, a0, a1, widthAm, rgb, alpha, seed){
+  const w = px(widthAm);
+  if (CAN_BLUR && w > 1.2){
+    g.save();
+    g.filter = "blur(" + Math.max(1, w*0.5).toFixed(2) + "px)";
+    g.lineCap = "round";
+    for (let pass = 0; pass < 2; pass++){
+      g.strokeStyle = "rgba(" + rgb + "," + (alpha*(pass ? 0.55 : 1)) + ")";
+      g.lineWidth = Math.max(0.8, w*(pass ? 1.7 : 0.75));
+      g.beginPath();
+      g.arc(px(cxAm), px(cyAm), px(radAm)*(pass ? 1.012 : 1), a0, a1);
+      g.stroke();
+    }
+    g.restore();
+    return;
+  }
+  const steps = 96, r = rng(seed);
+  for (let i = 0; i <= steps; i++){
+    const t = i/steps, a = a0 + (a1 - a0)*t;
+    const wob = 1 + (r()*2 - 1)*0.06;
+    const x = px(cxAm + Math.cos(a)*radAm*wob);
+    const y = px(cyAm + Math.sin(a)*radAm*wob);
+    const taper = Math.sin(t*Math.PI);
+    soft(g, x, y, Math.max(0.5, w*(0.5 + r()*0.4)), rgb, alpha*(0.4 + taper*0.6));
+  }
+}
+
+/* scattered cluster of stars over a given span */
+function starCluster(g, cxAm, cyAm, spanAm, count, m0, m1, seed, concentration){
+  const r = rng(seed);
+  if (CTX.thumb) count = Math.ceil(count / 3);
+  for (let i = 0; i < count; i++){
+    const ang = r()*6.2832;
+    const rad = (spanAm/2) * Math.pow(r(), concentration || 1);
+    drawStar(g, px(cxAm + Math.cos(ang)*rad), px(cyAm + Math.sin(ang)*rad),
+             m0 + (m1 - m0)*Math.pow(r(), 0.7), r(), 1);
+  }
+}
+
+/* ---------- solar system ---------- */
+
+function drawVenus(g){
+  const R = px(0.21);
+  if (R < 0.9){ drawStar(g, 0, 0, -3.9, 0.35, 1); return; }
+  g.save(); g.beginPath(); g.arc(0, 0, R, 0, 6.2832); g.clip();
+  const grd = g.createRadialGradient(-R*0.3, -R*0.3, R*0.1, 0, 0, R);
+  grd.addColorStop(0, "#FFF8E4"); grd.addColorStop(0.7, "#F2E3BE"); grd.addColorStop(1, "#D6C49B");
+  g.fillStyle = grd; g.fillRect(-R, -R, R*2, R*2);
+  /* a fat crescent — Venus is only ever a phase */
+  g.fillStyle = "#04060C";
+  g.beginPath(); g.ellipse(R*0.42, 0, R*0.98, R*1.02, 0, 0, 6.2832); g.fill();
+  g.restore();
+}
+
+/* ---------- galaxies ---------- */
+
+function drawM33(g){
+  spiralGalaxy(g, 36, 22, 0.35, 2, 0.62, "196,206,214", "246,242,228", 0.16);
+}
+function drawM51(g){
+  spiralGalaxy(g, 5.5, 4.4, -0.5, 2, 0.72, "206,212,224", "252,248,232", 0.42);
+  soft(g, px(1.2), px(-4.2), px(1.5), "226,220,204", 0.40);      /* NGC 5195 */
+  soft(g, px(1.2), px(-4.2), px(0.5), "252,248,232", 0.55);
+  /* the bridge */
+  soft(g, px(0.8), px(-2.5), px(1.1), "206,212,224", 0.16);
+}
+function drawM81(g){
+  spiralGalaxy(g, 13.5, 7.0, 0.95, 2, 0.60, "212,206,196", "255,250,232", 0.34);
+}
+function drawM104(g){
+  const rx = px(4.5), ry = px(2.0);
+  if (rx < 1){ soft(g, 0, 0, Math.max(0.9, rx*1.8), "250,246,232", 0.55); return; }
+  g.save(); g.rotate(-0.28);
+  soft(g, 0, 0, rx, "216,210,196", 0.30);                        /* disc */
+  g.save(); g.scale(1, ry/rx);
+  soft(g, 0, 0, rx*0.62, "248,243,226", 0.42);                   /* bulge */
+  soft(g, 0, 0, rx*0.26, "255,252,240", 0.60);
+  g.restore();
+  g.fillStyle = "rgba(5,8,16,.72)";                              /* the hat brim */
+  g.beginPath(); g.ellipse(0, ry*0.36, rx*0.99, Math.max(0.7, ry*0.17), 0, 0, 6.2832); g.fill();
+  g.restore();
+}
+
+/* ---------- nebulae ---------- */
+
+/* One supernova shell just under three degrees across. The two bright arcs are
+   opposite limbs of the same ring, so they bow away from each other. */
+function drawVeil(g){
+  filament(g,  2, 0, 88, 2.45, 3.95, 1.9, "138,214,196", 0.42, 901);   /* NGC 6960, west */
+  filament(g,  2, 0, 88, 2.50, 3.90, 5.5, "104,150,200", 0.11, 902);
+  filament(g,  4, 1, 82, 2.72, 3.62, 1.3, "126,200,186", 0.24, 907);   /* inner west strand */
+  filament(g, -4, 2, 90, -0.72, 0.72, 2.1, "142,220,200", 0.44, 903);  /* NGC 6992, east */
+  filament(g, -4, 2, 90, -0.68, 0.68, 6.0, "104,150,200", 0.12, 904);
+  filament(g, -4, 2, 83, -0.50, 0.46, 1.4, "126,200,186", 0.26, 906);
+  filament(g,  0, 0, 78, 3.95, 4.75, 2.4, "124,196,184", 0.22, 905);   /* Pickering's Triangle */
+  drawStar(g, px(-85), px(-14), 4.2, 0.9, 1.1);                        /* 52 Cygni, on the Broom */
+}
+
+/* The continent outline, in arcminutes. The Gulf of Mexico is the notch between
+   Florida and Mexico — cut into the shape itself, not painted over it. */
+const NGC7000_OUTLINE = [
+  [-44,-46],[-12,-51],[ 18,-45],[ 42,-31],[ 50,-14],[ 46, -1],
+  [ 37,  9],[ 30, 20],[ 27, 33],[ 22, 44],[ 16, 47],[ 13, 37],
+  [  8, 27],[ -2, 23],[-12, 27],[-20, 40],[-29, 45],[-34, 36],
+  [-27, 23],[-36, 12],[-45,  0],[-51,-16],[-49,-33]
+];
+
+function drawNorthAmerica(g){
+  const blur = Math.max(1.1, px(2.4));
+  g.save();
+  if (CAN_BLUR) g.filter = "blur(" + blur.toFixed(2) + "px)";
+  const grd = g.createLinearGradient(0, px(-50), 0, px(48));
+  grd.addColorStop(0,    "rgba(146, 96, 94,.26)");
+  grd.addColorStop(0.45, "rgba(192,120,106,.36)");
+  grd.addColorStop(0.78, "rgba(206,132,112,.40)");
+  grd.addColorStop(1,    "rgba(150, 98, 96,.24)");
+  poly(g, NGC7000_OUTLINE);
+  g.fillStyle = grd; g.fill();
+  /* the Cygnus Wall — the bright rim along the "Mexico" coast */
+  g.strokeStyle = "rgba(232,158,126,.34)";
+  g.lineWidth = Math.max(1, px(2.6));
+  g.beginPath();
+  g.moveTo(px(8), px(27)); g.lineTo(px(-2), px(23));
+  g.lineTo(px(-12), px(27)); g.lineTo(px(-20), px(40));
+  g.stroke();
+  g.restore();
+
+  /* mottling, clipped to the continent so the edge stays a coastline */
+  g.save();
+  poly(g, NGC7000_OUTLINE); g.clip();
+  if (CAN_BLUR) g.filter = "blur(" + Math.max(1.4, px(3.4)).toFixed(2) + "px)";
+  const mr = rng(7001);
+  for (let i = 0; i < 18; i++){
+    const x = px((mr()*2 - 1)*48), y = px((mr()*2 - 1)*44);
+    const bright = mr() > 0.45;
+    soft(g, x, y, px(5 + mr()*13),
+         bright ? "226,150,124" : "70,44,52", bright ? 0.12 : 0.16);
+  }
+  g.restore();
+
+  starCluster(g, 0, 0, 130, 55, 7.0, 11.5, 700, 1);
+}
+
+function drawLagoon(g){
+  cloud(g, px(0),   px(0),  40, 18, 0.10, "186,126,116", 0.19);
+  cloud(g, px(-14), px(-2), 20, 12, 0.15, "206,142,126", 0.22);
+  cloud(g, px(10),  px(3),  18, 11, -0.10,"176,124,120", 0.17);
+  cloud(g, px(-16), px(-3),  6,  5, 0.00, "255,236,214", 0.34);   /* the Hourglass */
+  cloud(g, px(-2),  px(1),  16,  3, 0.16, "5,8,16", 0.55);        /* the lagoon itself */
+  starCluster(g, 12, 2, 26, 40, 7.2, 11.0, 653, 1.4);             /* NGC 6530 */
+}
+
+function drawEagle(g){
+  cloud(g, px(0),  px(0),  11, 9,  0.20, "170,128,124", 0.22);
+  cloud(g, px(-2), px(2),   6, 5,  0.10, "202,146,132", 0.24);
+  /* the pillars */
+  cloud(g, px(0.4), px(1.6), 1.5, 3.0, 0.28, "6,9,18", 0.62);
+  cloud(g, px(-1.6),px(1.2), 1.0, 2.2, 0.10, "6,9,18", 0.52);
+  starCluster(g, 0, -1, 16, 32, 8.2, 12.0, 616, 1.2);
+}
+
+/* ---------- clusters ---------- */
+
+function drawBeehive(g){
+  const bright = [[0,0,6.3],[-18,-12,6.6],[14,-20,6.4],[22,10,6.8],[-24,16,6.9],
+                  [6,26,7.1],[-8,-30,7.3],[30,-6,7.4],[-32,-4,7.6],[10,8,7.8],
+                  [-12,20,7.9],[26,28,8.1],[-30,30,8.3],[2,-16,8.0]];
+  bright.forEach(function(b){ drawStar(g, px(b[0]), px(b[1]), b[2], 0.55, 1.1); });
+  starCluster(g, 0, 0, 95, 45, 8.6, 11.4, 44, 1);
+}
+
+function drawDoubleCluster(g){
+  soft(g, px(-14), 0, px(11), "180,196,224", 0.10);
+  soft(g, px( 14), 0, px(11), "180,196,224", 0.10);
+  starCluster(g, -14, 0, 22, 60, 6.6, 11.6, 869, 1.5);
+  starCluster(g,  14, 0, 22, 60, 6.8, 11.8, 884, 1.5);
+  drawStar(g, px(-14), px(1.5), 6.0, 0.12, 1.1);
+  drawStar(g, px( 16), px(-2),  6.4, 0.10, 1.1);
+}
+
+const CATEGORIES = [
+  {id:"all",    label:"Everything"},
+  {id:"solar",  label:"Solar system"},
+  {id:"galaxy", label:"Galaxies"},
+  {id:"nebula", label:"Nebulae"},
+  {id:"cluster",label:"Clusters"},
+  {id:"double", label:"Double stars"}
+];
+
 const TARGETS = [
-  {id:"moon",    name:"Moon",        w:31,  h:31,  seed:11, draw:drawMoon,
+  /* ---------- solar system ---------- */
+  {id:"moon",    cat:"solar", name:"Moon",        w:31,  h:31,  seed:11, draw:drawMoon,
    note:"Half a degree wide. Once you know how the Moon sits in a field, you can judge every other object by it."},
-  {id:"jupiter", name:"Jupiter",     w:0.66,h:0.62,seed:12, detail:{span:1.05, at:[0,0], label:"disc"}, draw:drawJupiter,
+  {id:"jupiter", cat:"solar", name:"Jupiter",     w:0.66,h:0.62,seed:12, detail:{span:1.05, at:[0,0], label:"disc"}, draw:drawJupiter,
    note:"The disc is 40 arcseconds — a pinprick at low power. The four Galilean moons string out across 20 arcminutes."},
-  {id:"saturn",  name:"Saturn",      w:0.73,h:0.31,seed:13, detail:{span:1.10, at:[0,0], label:"rings"}, draw:drawSaturn,
+  {id:"saturn",  cat:"solar", name:"Saturn",      w:0.73,h:0.31,seed:13, detail:{span:1.10, at:[0,0], label:"rings"}, draw:drawSaturn,
    note:"Rings 44 arcseconds tip to tip. This one is a magnification problem, never a field problem."},
-  {id:"mars",    name:"Mars",        w:0.40,h:0.40,seed:14, detail:{span:0.60, at:[0,0], label:"disc"}, draw:drawMars,
+  {id:"mars",    cat:"solar", name:"Mars",        w:0.40,h:0.40,seed:14, detail:{span:0.60, at:[0,0], label:"disc"}, draw:drawMars,
    note:"24 arcseconds at a good opposition, and under 5 the rest of the time. Aperture and steady air decide what you see."},
-  {id:"m42",     name:"M42 Orion",   w:85,  h:60,  seed:42, detail:{span:1.30, at:[0,0], label:"Trapezium"}, draw:drawM42,
-   note:"Over a degree of nebula wrapped around the Trapezium — a four-star knot inside 20 arcseconds. Wide and tight in one object."},
-  {id:"m31",     name:"M31 Andromeda",w:190,h:60,  seed:31, draw:drawM31,
+  {id:"venus",   cat:"solar", name:"Venus",       w:0.42,h:0.42,seed:15, detail:{span:0.62, at:[0,0], label:"phase"}, draw:drawVenus,
+   note:"Brilliant and always a phase — never a full disc. 25 arcseconds here, and it swells as it swings towards us."},
+
+  /* ---------- galaxies ---------- */
+  {id:"m31",     cat:"galaxy", name:"M31 Andromeda", w:190, h:60, seed:31, detail:{span:26, at:[0,0], label:"core"}, draw:drawM31,
    note:"Three degrees end to end. Almost no telescope shows all of it; this is the object that sends people back to binoculars."},
-  {id:"m45",     name:"M45 Pleiades",w:110, h:110, seed:45, draw:drawM45,
-   note:"Nearly two degrees of cluster. Magnify it and you lose the shape that makes it worth looking at."},
-  {id:"m13",     name:"M13 Hercules",w:20,  h:20,  seed:13, detail:{span:26.0, at:[0,0], label:"core"}, draw:drawM13,
-   note:"20 arcminutes of globular cluster. Aperture is what turns the fuzzy ball into countable stars."},
-  {id:"m27",     name:"M27 Dumbbell",w:8,   h:5.6, seed:27, detail:{span:12.0, at:[0,0], label:"nebula"}, draw:drawM27,
+  {id:"m33",     cat:"galaxy", name:"M33 Triangulum", w:73, h:45, seed:33, detail:{span:22, at:[0,0], label:"core"}, draw:drawM33,
+   note:"Over a degree wide but spread thin — the classic low-surface-brightness trap. Low power and a wide field beat magnification every time."},
+  {id:"m51",     cat:"galaxy", name:"M51 Whirlpool", w:11, h:9, seed:51, detail:{span:15, at:[0,0], label:"arms"}, draw:drawM51,
+   note:"Eleven arcminutes including its companion. Small enough for real magnification, and the spiral arms need every millimetre of aperture."},
+  {id:"m81",     cat:"galaxy", name:"M81 Bode's",   w:27, h:14, seed:81, detail:{span:32, at:[0,0], label:"disc"}, draw:drawM81,
+   note:"A bright oval nearly half a degree long, with M82 a third of a degree away — a pair that rewards a wide field."},
+  {id:"m104",    cat:"galaxy", name:"M104 Sombrero", w:9, h:4, seed:104, detail:{span:11, at:[0,0], label:"dust lane"}, draw:drawM104,
+   note:"Nine arcminutes, and the dust lane across the bulge is the whole show. Aperture and magnification together, not one or the other."},
+
+  /* ---------- nebulae ---------- */
+  {id:"m42",     cat:"nebula", name:"M42 Orion",    w:85, h:60, seed:42, detail:{span:1.30, at:[0,0], label:"Trapezium"}, draw:drawM42,
+   note:"Over a degree of nebula wrapped around the Trapezium — a four-star knot inside 20 arcseconds. Wide and tight in one object."},
+  {id:"veil",    cat:"nebula", name:"Veil Nebula",  w:180, h:170, seed:6960, detail:{span:46, at:[-80,-6], label:"Witch's Broom"}, draw:drawVeil,
+   note:"A three-degree supernova shell. You never see the whole ring in a telescope — you trace one filament at a time across the field."},
+  {id:"ngc7000", cat:"nebula", name:"North America", w:120, h:100, seed:7000, detail:{span:44, at:[0,4], label:"the Gulf"}, draw:drawNorthAmerica,
+   note:"Two degrees across. The shape only appears when the whole thing fits, so this is a short-focal-length, wide-eyepiece object."},
+  {id:"m8",      cat:"nebula", name:"M8 Lagoon",     w:90, h:40, seed:8, detail:{span:22, at:[-12,-1], label:"Hourglass"}, draw:drawLagoon,
+   note:"A degree and a half of nebula with its own cluster inside it, split by the dark lane that named it."},
+  {id:"m16",     cat:"nebula", name:"M16 Eagle",     w:25, h:20, seed:16, detail:{span:7, at:[0,1], label:"pillars"}, draw:drawEagle,
+   note:"The cluster is easy, the nebula needs dark sky, and the pillars at its heart are only a few arcminutes wide."},
+  {id:"m27",     cat:"nebula", name:"M27 Dumbbell",  w:8, h:5.6, seed:27, detail:{span:12.0, at:[0,0], label:"nebula"}, draw:drawM27,
    note:"Eight arcminutes and genuinely bright. Comfortable in almost any field, rewards moderate magnification."},
-  {id:"m57",     name:"M57 Ring",    w:1.4, h:1.0, seed:57, detail:{span:2.40, at:[0,0], label:"ring"}, draw:drawM57,
+  {id:"m57",     cat:"nebula", name:"M57 Ring",      w:1.4, h:1.0, seed:57, detail:{span:2.40, at:[0,0], label:"ring"}, draw:drawM57,
    note:"84 arcseconds. At low power it hides among the stars; the hole in the middle only opens up when you push the power."},
-  {id:"albireo", name:"Albireo",     w:35/60,h:35/60, sep:35/60, seed:19, detail:{span:1.40, at:[0,0], label:"pair"}, draw:drawAlbireo,
+
+  /* ---------- clusters ---------- */
+  {id:"m45",     cat:"cluster", name:"M45 Pleiades", w:110, h:110, seed:45, draw:drawM45,
+   note:"Nearly two degrees of cluster. Magnify it and you lose the shape that makes it worth looking at."},
+  {id:"m44",     cat:"cluster", name:"M44 Beehive",  w:95, h:95, seed:44, draw:drawBeehive,
+   note:"Over a degree and a half of loose bright stars. A finder or a short refractor frames it better than any large telescope."},
+  {id:"dbl",     cat:"cluster", name:"Double Cluster", w:60, h:30, seed:869, detail:{span:26, at:[-14,0], label:"NGC 869"}, draw:drawDoubleCluster,
+   note:"Two rich clusters half a degree apart. Getting both in one field is the entire point — a true-field problem, not a magnification one."},
+  {id:"m13",     cat:"cluster", name:"M13 Hercules", w:20, h:20, seed:13, detail:{span:26.0, at:[0,0], label:"core"}, draw:drawM13,
+   note:"20 arcminutes of globular cluster. Aperture is what turns the fuzzy ball into countable stars."},
+
+  /* ---------- double stars ---------- */
+  {id:"albireo", cat:"double", name:"Albireo",  w:35/60, h:35/60, sep:35/60, seed:19, detail:{span:1.40, at:[0,0], label:"pair"}, draw:drawAlbireo,
    note:"Gold and blue, 35 arcseconds apart. Any telescope splits this one — Albireo is about colour, not resolution."},
-  {id:"epslyr",  name:"ε Lyrae",     w:3.7, h:3.7, sep:2.35/60, seed:61, detail:{span:0.28, at:[-0.25,-1.72], label:"north pair"}, draw:drawDoubleDouble,
+  {id:"epslyr",  cat:"double", name:"ε Lyrae",  w:3.7, h:3.7, sep:2.35/60, seed:61, detail:{span:0.28, at:[-0.25,-1.72], label:"north pair"}, draw:drawDoubleDouble,
    note:"The Double-Double: two pairs 3.5′ apart, each split by just 2.35″. Push the aperture past about 50 mm and two stars become four. Nothing you do to the eyepiece changes that."}
 ];
 
@@ -850,8 +1209,18 @@ const TARGETS = [
 const state = {
   aperture:203, focal:1200, barlow:1,
   epFocal:25, epAfov:52,
-  target:"moon"
+  target:"moon", cat:"all"
 };
+
+function visibleTargets(){
+  return state.cat === "all"
+    ? TARGETS
+    : TARGETS.filter(function(t){ return t.cat === state.cat; });
+}
+
+function currentTarget(){
+  return TARGETS.filter(function(t){ return t.id === state.target; })[0];
+}
 
 function optics(){
   const efl   = state.focal * state.barlow;
@@ -905,70 +1274,75 @@ function fmtAngle(arcmin){
   return trim(arcmin*60, arcmin*60 >= 10 ? 0 : 1) + "″";
 }
 
-function render(){
-  const o = optics();
-  const target = TARGETS.filter(function(t){ return t.id === state.target; })[0];
-  const S = cssSize;
+/* Paints one eyepiece field. Used by the main view and by every gallery thumbnail,
+   so a thumbnail is never a different drawing — only a smaller one. */
+function paintField(g2, S, target, o, opts){
+  opts = opts || {};
   const R = S * 0.465;
   const tfovAm = o.tfov * 60;
   const scale  = R / (tfovAm / 2);              /* px per arcmin */
-
+  const prev = CTX;
   CTX = {s:scale, dawes:o.dawes/60, limit:o.limit, unit:S/390};
 
-  g.clearRect(0, 0, S, S);
+  g2.clearRect(0, 0, S, S);
 
-  /* --- inside the field --- */
-  g.save();
-  g.beginPath(); g.arc(S/2, S/2, R, 0, 6.2832); g.clip();
+  g2.save();
+  g2.beginPath(); g2.arc(S/2, S/2, R, 0, 6.2832); g2.clip();
 
-  const sky = g.createRadialGradient(S/2, S/2, 0, S/2, S/2, R);
+  const sky = g2.createRadialGradient(S/2, S/2, 0, S/2, S/2, R);
   sky.addColorStop(0, "#05070E");
   sky.addColorStop(0.75, "#080C18");
   sky.addColorStop(1, "#0C1224");
-  g.fillStyle = sky; g.fillRect(0, 0, S, S);
+  g2.fillStyle = sky; g2.fillRect(0, 0, S, S);
 
-  g.translate(S/2, S/2);
+  g2.translate(S/2, S/2);
 
   /* Only draw a layer that spans the whole visible field — otherwise its edge shows
      up as a dense clump sitting in the middle of the view. */
   const halfW = (S / 2) / scale;
-  buildField(target.seed).forEach(function(L){
-    if (L.span < halfW) return;
+  const budget = opts.thumb ? 1 : 3;
+  CTX.thumb = !!opts.thumb;
+  buildField(target.seed).forEach(function(L, li){
+    if (L.span < halfW || li >= budget) return;
     L.stars.forEach(function(st){
       if (st.x < -halfW || st.x > halfW || st.y < -halfW || st.y > halfW) return;
-      drawStar(g, st.x * scale, st.y * scale, st.m, st.t, 1);
+      drawStar(g2, st.x * scale, st.y * scale, st.m, st.t, 1);
     });
   });
 
-  target.draw(g);
-  g.restore();
+  target.draw(g2);
+  g2.restore();
 
   /* --- field stop rim --- */
   const line = cssVar("--line");
-  g.save();
-  g.strokeStyle = line; g.lineWidth = 2;
-  g.beginPath(); g.arc(S/2, S/2, R + 1, 0, 6.2832); g.stroke();
-  g.strokeStyle = "rgba(255,255,255,.07)"; g.lineWidth = 1;
-  g.beginPath(); g.arc(S/2, S/2, R - 1.5, 0, 6.2832); g.stroke();
-  g.restore();
+  g2.save();
+  g2.strokeStyle = line; g2.lineWidth = opts.thumb ? 1 : 2;
+  g2.beginPath(); g2.arc(S/2, S/2, R + 1, 0, 6.2832); g2.stroke();
+  if (!opts.thumb){
+    g2.strokeStyle = "rgba(255,255,255,.07)"; g2.lineWidth = 1;
+    g2.beginPath(); g2.arc(S/2, S/2, R - 1.5, 0, 6.2832); g2.stroke();
+  }
+  g2.restore();
+
+  if (opts.thumb){ CTX = prev; return; }
 
   /* --- overlays --- */
   const ink3 = cssVar("--ink-3");
   const mono = '500 ' + Math.max(10, S*0.028) + 'px "IBM Plex Mono", ui-monospace, monospace';
-  g.font = mono; g.textBaseline = "alphabetic"; g.textAlign = "left";
+  g2.font = mono; g2.textBaseline = "alphabetic"; g2.textAlign = "left";
 
   /* scale bar, bottom-left inside the field */
   const step  = niceScaleStep(tfovAm);
   const barPx = step * scale;
   const bx = S/2 - R*0.62, by = S/2 + R*0.74;
-  g.strokeStyle = "rgba(226,236,255,.62)"; g.lineWidth = 1.5;
-  g.beginPath();
-  g.moveTo(bx, by - 4); g.lineTo(bx, by + 4);
-  g.moveTo(bx, by);     g.lineTo(bx + barPx, by);
-  g.moveTo(bx + barPx, by - 4); g.lineTo(bx + barPx, by + 4);
-  g.stroke();
-  g.fillStyle = "rgba(226,236,255,.72)";
-  g.fillText(fmtAngle(step), bx, by - 8);
+  g2.strokeStyle = "rgba(226,236,255,.62)"; g2.lineWidth = 1.5;
+  g2.beginPath();
+  g2.moveTo(bx, by - 4); g2.lineTo(bx, by + 4);
+  g2.moveTo(bx, by);     g2.lineTo(bx + barPx, by);
+  g2.moveTo(bx + barPx, by - 4); g2.lineTo(bx + barPx, by + 4);
+  g2.stroke();
+  g2.fillStyle = "rgba(226,236,255,.72)";
+  g2.fillText(fmtAngle(step), bx, by - 8);
 
   /* --- detail inset: the canvas resolves far less than an eye at a real eyepiece,
          so tight targets get an honest magnified crop drawn with the same physics --- */
@@ -979,33 +1353,39 @@ function render(){
     const iscale = (insetD * 0.78) / det.span;
     const factor = iscale / scale;
     if (factor > 1.6){
-      g.save();
-      g.beginPath(); g.arc(icx, icy, ir, 0, 6.2832); g.clip();
-      g.fillStyle = "#04060C"; g.fillRect(icx - ir, icy - ir, insetD, insetD);
+      g2.save();
+      g2.beginPath(); g2.arc(icx, icy, ir, 0, 6.2832); g2.clip();
+      g2.fillStyle = "#04060C"; g2.fillRect(icx - ir, icy - ir, insetD, insetD);
       CTX = {s:iscale, dawes:o.dawes/60, limit:o.limit, unit:S/390};
-      g.translate(icx - det.at[0]*iscale, icy - det.at[1]*iscale);
-      target.draw(g);
-      g.restore();
+      g2.translate(icx - det.at[0]*iscale, icy - det.at[1]*iscale);
+      target.draw(g2);
+      g2.restore();
       CTX = {s:scale, dawes:o.dawes/60, limit:o.limit, unit:S/390};
 
-      g.save();
-      g.strokeStyle = line; g.lineWidth = 1.5;
-      g.beginPath(); g.arc(icx, icy, ir, 0, 6.2832); g.stroke();
-      g.fillStyle = ink3;
-      g.font = '500 ' + Math.max(9, S*0.024) + 'px "IBM Plex Mono", ui-monospace, monospace';
-      g.textAlign = "center";
-      g.fillText(det.label + " ×" + Math.round(factor), icx, icy - ir - Math.max(4, S*0.012));
-      g.restore();
+      g2.save();
+      g2.strokeStyle = line; g2.lineWidth = 1.5;
+      g2.beginPath(); g2.arc(icx, icy, ir, 0, 6.2832); g2.stroke();
+      g2.fillStyle = ink3;
+      g2.font = '500 ' + Math.max(9, S*0.024) + 'px "IBM Plex Mono", ui-monospace, monospace';
+      g2.textAlign = "center";
+      g2.fillText(det.label + " ×" + Math.round(factor), icx, icy - ir - Math.max(4, S*0.012));
+      g2.restore();
     }
   }
 
   /* labels, top */
-  g.fillStyle = ink3;
-  g.textAlign = "left";
-  g.fillText(target.name.toUpperCase(), 2, Math.max(11, S*0.031));
-  g.textAlign = "right";
-  g.fillText(fmtAngle(tfovAm) + " field", S - 2, Math.max(11, S*0.031));
-  g.textAlign = "left";
+  g2.fillStyle = ink3;
+  g2.textAlign = "left";
+  g2.fillText(target.name.toUpperCase(), 2, Math.max(11, S*0.031));
+  g2.textAlign = "right";
+  g2.fillText(fmtAngle(tfovAm) + " field", S - 2, Math.max(11, S*0.031));
+  g2.textAlign = "left";
+
+  CTX = prev;
+}
+
+function render(){
+  paintField(g, cssSize, currentTarget(), optics(), {});
 }
 
 /* =========================================================
@@ -1027,7 +1407,7 @@ function pill(id, text, cls){
 
 function update(){
   const o = optics();
-  const target = TARGETS.filter(function(t){ return t.id === state.target; })[0];
+  const target = currentTarget();
   const objAm = Math.max(target.w, target.h);
   const tfovAm = o.tfov * 60;
   const fill = objAm / tfovAm * 100;
@@ -1099,6 +1479,212 @@ function update(){
   document.getElementById("target-note").textContent = target.note;
 
   render();
+  drawSchematic();
+  drawParams();
+  scheduleGallery();
+}
+
+let galleryTimer = null;
+function scheduleGallery(){
+  clearTimeout(galleryTimer);
+  galleryTimer = setTimeout(drawGallery, 110);
+}
+
+/* =========================================================
+   9. Optical schematic
+   ========================================================= */
+
+const SVGNS = "http://www.w3.org/2000/svg";
+const schematic = document.getElementById("schematic");
+
+function el(tag, attrs, text){
+  const n = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (text != null) n.textContent = text;
+  return n;
+}
+function clamp(v, lo, hi){ return Math.min(hi, Math.max(lo, v)); }
+
+function drawSchematic(){
+  const o = optics();
+  while (schematic.childNodes.length > 1) schematic.removeChild(schematic.lastChild);
+  const add = function(n){ schematic.appendChild(n); return n; };
+  const midY = 112;
+
+  /* The eye is anchored on the right and the telescope grows away from it, so the
+     eyepiece end never runs off the edge no matter how long the scope gets. */
+  const H       = 34 + 126 * clamp((state.aperture - 30) / 470, 0, 1);
+  const eyeX    = 634;
+  const epX     = eyeX - 98;
+  const epGap   = 20 + 44 * clamp((state.epFocal - 2) / 54, 0, 1);
+  const focusX  = epX - epGap;
+  const focalPx = clamp(H * o.fr * 0.5, 150, 330);
+  const objX    = focusX - focalPx;
+
+  /* --- incoming starlight --- */
+  for (let i = -2; i <= 2; i++){
+    const y = midY + i * H * 0.24;
+    add(el("path", {class:"sch-ray", d:"M14 " + y.toFixed(1) + " H " + (objX - 7)}));
+  }
+  add(el("path", {class:"sch-ray", d:"M" + (objX - 44) + " " + (midY - H*0.5 - 12) + " l 13 4.5 l -13 4.5"}));
+  add(el("text", {class:"sch-key", x:14, y:midY - H*0.5 - 14}, "STARLIGHT"));
+
+  /* --- converging cone --- */
+  add(el("path", {class:"sch-cone",
+    d:"M" + objX + " " + (midY - H/2) + " L " + focusX + " " + midY + " L " + objX + " " + (midY + H/2) + " Z"}));
+  add(el("path", {class:"sch-ray", d:"M" + objX + " " + (midY - H/2) + " L " + focusX + " " + midY}));
+  add(el("path", {class:"sch-ray", d:"M" + objX + " " + (midY + H/2) + " L " + focusX + " " + midY}));
+
+  /* --- objective --- */
+  add(el("ellipse", {class:"sch-glass", cx:objX, cy:midY, rx:6.5, ry:H/2}));
+  add(el("text", {class:"sch-key", x:objX, y:midY + H/2 + 17, "text-anchor":"middle"}, "OBJECTIVE"));
+  add(el("text", {class:"sch-txt", x:objX, y:midY + H/2 + 33, "text-anchor":"middle"}, state.aperture + " mm"));
+
+  /* aperture dimension */
+  const dimX = objX - 24;
+  add(el("path", {class:"sch-solid", d:"M" + dimX + " " + (midY - H/2) + " V " + (midY + H/2)}));
+  add(el("path", {class:"sch-solid", d:"M" + (dimX-4) + " " + (midY-H/2) + " h8 M" + (dimX-4) + " " + (midY+H/2) + " h8"}));
+  add(el("text", {class:"sch-hot", x:dimX - 7, y:midY + 4, "text-anchor":"end"}, "D"));
+
+  /* --- barlow or reducer sitting in the cone --- */
+  if (state.barlow !== 1){
+    const bX = objX + focalPx * 0.68;
+    const bH = Math.max(16, H * 0.32 * 1.3);
+    add(el("ellipse", {class:"sch-glass", cx:bX, cy:midY, rx:4, ry:bH/2}));
+    add(el("text", {class:"sch-key", x:bX, y:midY - bH/2 - 8, "text-anchor":"middle"},
+      (state.barlow > 1 ? "BARLOW " : "REDUCER ") + state.barlow + "×"));
+  }
+
+  /* --- focal plane / field stop --- */
+  const fsMm = o.tfov * Math.PI / 180 * o.efl;              /* field stop diameter, mm */
+  const fsPx = clamp(fsMm * 1.5, 7, 46);
+  add(el("path", {class:"sch-dim", d:"M" + focusX + " " + (midY - 46) + " V " + (midY + 42)}));
+  add(el("path", {class:"sch-solid", d:"M" + (focusX-5) + " " + (midY - fsPx/2) + " h10 M" + (focusX-5) + " " + (midY + fsPx/2) + " h10"}));
+  add(el("text", {class:"sch-key", x:focusX, y:midY - 52, "text-anchor":"middle"}, "FOCAL PLANE"));
+  add(el("text", {class:"sch-txt", x:focusX - 9, y:midY - 76, "text-anchor":"end"}, "field stop " + fsMm.toFixed(1) + " mm"));
+
+  /* --- eyepiece and the apparent-field cone into the eye --- */
+  const epH = 26 + 22 * clamp((state.epAfov - 30) / 90, 0, 1);
+  add(el("path", {class:"sch-eye-cone",
+    d:"M" + focusX + " " + (midY - fsPx/2) + " L " + epX + " " + (midY - epH/2) +
+      " L " + eyeX + " " + (midY - epH*0.28) + " L " + eyeX + " " + (midY + epH*0.28) +
+      " L " + epX + " " + (midY + epH/2) + " L " + focusX + " " + (midY + fsPx/2) + " Z"}));
+  add(el("path", {class:"sch-ray", d:"M" + focusX + " " + (midY - fsPx/2) + " L " + epX + " " + (midY - epH/2)}));
+  add(el("path", {class:"sch-ray", d:"M" + focusX + " " + (midY + fsPx/2) + " L " + epX + " " + (midY + epH/2)}));
+  add(el("ellipse", {class:"sch-glass", cx:epX, cy:midY, rx:5, ry:epH/2}));
+  add(el("text", {class:"sch-key", x:epX, y:midY + epH/2 + 17, "text-anchor":"middle"}, "EYEPIECE"));
+  add(el("text", {class:"sch-txt", x:epX, y:midY + epH/2 + 33, "text-anchor":"middle"},
+    state.epFocal + " mm · " + state.epAfov + "°"));
+
+  /* --- exit pupil, drawn against a 7 mm dark-adapted eye --- */
+  const refR = 7 * 2.2;
+  const pupilPx = clamp(o.exit * 2.2, 1.3, refR);
+  const pX = epX + 44;
+  add(el("path", {class:"sch-dim", d:"M" + (epX + 7) + " " + (midY - 6) + " L " + (pX - refR - 3) + " " + (midY - 52)}));
+  add(el("circle", {class:"sch-dim", cx:pX, cy:midY - 56, r:refR}));
+  add(el("circle", {class:"sch-glass", cx:pX, cy:midY - 56, r:pupilPx}));
+  add(el("text", {class:"sch-key", x:pX, y:midY - 56 - refR - 8, "text-anchor":"middle"}, "EXIT PUPIL"));
+  add(el("text", {class:"sch-txt", x:pX, y:midY - 56 + refR + 15, "text-anchor":"middle"}, o.exit.toFixed(1) + " mm"));
+
+  /* --- eye --- */
+  add(el("path", {class:"sch-line",
+    d:"M" + (eyeX + 2) + " " + (midY - 17) + " q 26 17 0 34 q -26 -17 0 -34 Z"}));
+  add(el("circle", {class:"sch-line", cx:eyeX + 10, cy:midY, r:5}));
+  add(el("text", {class:"sch-key", x:eyeX + 8, y:midY + 33, "text-anchor":"middle"}, "EYE"));
+
+  /* --- effective focal length dimension along the bottom --- */
+  const dimY = 232;
+  add(el("path", {class:"sch-dim", d:"M" + objX + " " + (midY + H/2 + 40) + " V " + dimY}));
+  add(el("path", {class:"sch-dim", d:"M" + focusX + " " + (midY + 60) + " V " + dimY}));
+  add(el("path", {class:"sch-solid", d:"M" + objX + " " + dimY + " H " + focusX}));
+  add(el("path", {class:"sch-solid", d:"M" + objX + " " + (dimY-4) + " v8 M" + focusX + " " + (dimY-4) + " v8"}));
+  add(el("text", {class:"sch-hot", x:(objX + focusX)/2, y:dimY - 8, "text-anchor":"middle"},
+    "effective focal length " + Math.round(o.efl) + " mm"));
+  add(el("text", {class:"sch-txt", x:(objX + focusX)/2, y:dimY + 19, "text-anchor":"middle"},
+    "f/" + o.fr.toFixed(1) + " — the cone angle drawn above"));
+
+  document.getElementById("sch-aside").textContent =
+    Math.round(o.mag) + "× · " + fmtTfov(o.tfov);
+}
+
+const PARAMS = [
+  {k:"Aperture",      d:0, v:function(o){ return state.aperture + " mm"; }},
+  {k:"Focal length",  d:0, v:function(o){ return state.focal + " mm"; }},
+  {k:"Barlow",        d:0, v:function(o){ return state.barlow + "×"; }},
+  {k:"Eyepiece",      d:0, v:function(o){ return state.epFocal + " mm"; }},
+  {k:"Apparent field",d:0, v:function(o){ return state.epAfov + "°"; }},
+  {k:"Effective FL",  d:1, v:function(o){ return Math.round(o.efl) + " mm"; }},
+  {k:"Focal ratio",   d:1, v:function(o){ return "f/" + o.fr.toFixed(1); }},
+  {k:"Magnification", d:1, v:function(o){ return Math.round(o.mag) + "×"; }},
+  {k:"True field",    d:1, v:function(o){ return fmtTfov(o.tfov); }},
+  {k:"Exit pupil",    d:1, v:function(o){ return o.exit.toFixed(2) + " mm"; }}
+];
+
+const paramsEl = document.getElementById("params");
+PARAMS.forEach(function(P){
+  const w = document.createElement("div");
+  w.className = "param" + (P.d ? " derived" : "");
+  w.innerHTML = '<span class="pk"></span><span class="pv"></span>';
+  w.firstChild.textContent = P.k;
+  paramsEl.appendChild(w);
+  P.el = w.lastChild;
+});
+function drawParams(){
+  const o = optics();
+  PARAMS.forEach(function(P){ P.el.textContent = P.v(o); });
+}
+
+/* =========================================================
+   10. Gallery — every target in the category, same field, same scale
+   ========================================================= */
+
+const galleryEl = document.getElementById("gallery");
+const cards = [];
+
+function buildGallery(){
+  galleryEl.innerHTML = "";
+  cards.length = 0;
+  visibleTargets().forEach(function(t){
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.className = "gcard";
+    btn.setAttribute("aria-pressed", t.id === state.target ? "true" : "false");
+    const cv = document.createElement("canvas");
+    const nm = document.createElement("span"); nm.className = "gn"; nm.textContent = t.name;
+    const sz = document.createElement("span"); sz.className = "gs";
+    const ff = document.createElement("span"); ff.className = "gf";
+    btn.appendChild(cv); btn.appendChild(nm); btn.appendChild(sz); btn.appendChild(ff);
+    btn.addEventListener("click", function(){ selectTarget(t.id); });
+    galleryEl.appendChild(btn);
+    cards.push({t:t, btn:btn, cv:cv, cx:cv.getContext("2d"), sz:sz, ff:ff, size:0});
+  });
+  document.getElementById("gal-aside").textContent =
+    cards.length + " object" + (cards.length === 1 ? "" : "s");
+  drawGallery();
+}
+
+function drawGallery(){
+  const o = optics();
+  const tfovAm = o.tfov * 60;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cards.forEach(function(c){
+    const wCss = Math.max(60, Math.round(c.cv.getBoundingClientRect().width || 104));
+    if (c.size !== wCss){
+      c.size = wCss;
+      c.cv.width = Math.round(wCss * dpr);
+      c.cv.height = Math.round(wCss * dpr);
+    }
+    c.cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    paintField(c.cx, wCss, c.t, o, {thumb:true});
+
+    const objAm = Math.max(c.t.w, c.t.h);
+    const fill = objAm / tfovAm * 100;
+    c.sz.textContent = fmtAngle(objAm);
+    if (fill > 100)     { c.ff.className = "gf bad";  c.ff.textContent = "overflows"; }
+    else if (fill > 65) { c.ff.className = "gf warn"; c.ff.textContent = "fills " + Math.round(fill) + "%"; }
+    else if (fill > 8)  { c.ff.className = "gf ok";   c.ff.textContent = "fills " + Math.round(fill) + "%"; }
+    else                { c.ff.className = "gf warn"; c.ff.textContent = "fills " + fill.toFixed(fill < 1 ? 2 : 1) + "%"; }
+    c.btn.setAttribute("aria-pressed", c.t.id === state.target ? "true" : "false");
+  });
 }
 
 /* =========================================================
@@ -1184,21 +1770,51 @@ BARLOWS.forEach(function(b){
   segBarlow.appendChild(btn);
 });
 
-/* target chips */
-const chips = document.getElementById("chips");
-TARGETS.forEach(function(t){
+/* category filter */
+const catsEl  = document.getElementById("cats");
+const chips   = document.getElementById("chips");
+
+function selectTarget(id){
+  state.target = id;
+  Array.prototype.forEach.call(chips.children, function(c){
+    c.setAttribute("aria-pressed", c.dataset.id === id ? "true" : "false");
+  });
+  update();
+  drawGallery();
+}
+
+function buildChips(){
+  chips.innerHTML = "";
+  visibleTargets().forEach(function(t){
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.className = "chip"; btn.textContent = t.name;
+    btn.dataset.id = t.id;
+    btn.setAttribute("aria-pressed", t.id === state.target ? "true" : "false");
+    btn.addEventListener("click", function(){ selectTarget(t.id); });
+    chips.appendChild(btn);
+  });
+}
+
+CATEGORIES.forEach(function(c){
   const btn = document.createElement("button");
-  btn.type = "button"; btn.className = "chip"; btn.textContent = t.name;
-  btn.setAttribute("aria-pressed", t.id === state.target ? "true" : "false");
+  btn.type = "button"; btn.className = "cat"; btn.textContent = c.label;
+  btn.setAttribute("aria-pressed", c.id === state.cat ? "true" : "false");
   btn.addEventListener("click", function(){
-    state.target = t.id;
-    Array.prototype.forEach.call(chips.children, function(c){
-      c.setAttribute("aria-pressed", c === btn ? "true" : "false");
+    state.cat = c.id;
+    Array.prototype.forEach.call(catsEl.children, function(x){
+      x.setAttribute("aria-pressed", x === btn ? "true" : "false");
     });
+    /* keep the current target if it lives in this category, else take the first */
+    const vis = visibleTargets();
+    if (!vis.some(function(t){ return t.id === state.target; })) state.target = vis[0].id;
+    buildChips();
+    buildGallery();
+    chips.scrollLeft = 0;
     update();
   });
-  chips.appendChild(btn);
+  catsEl.appendChild(btn);
 });
+buildChips();
 
 /* init */
 setAperture(state.aperture);
@@ -1207,7 +1823,7 @@ setEpFocal(state.epFocal);
 setEpAfov(state.epAfov);
 markCustom("aperture"); markCustom("epFocal");
 
-function boot(){ sizeCanvas(); update(); }
+function boot(){ sizeCanvas(); update(); buildGallery(); }
 boot();
 
 let resizeTimer = null;
