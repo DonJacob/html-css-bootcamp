@@ -390,6 +390,12 @@ footer p{margin:0 0 7px}
         <p class="chip-note" id="target-note"></p>
       </section>
 
+      <section class="panel" aria-labelledby="h-style">
+        <div class="panel-h"><h2 id="h-style">Drawn as</h2><span class="aside" id="style-aside">—</span></div>
+        <div class="seg" id="seg-style" role="group" aria-label="Drawing style"></div>
+        <p class="chip-note" id="style-note"></p>
+      </section>
+
       <section class="panel" aria-labelledby="h-scope">
         <div class="panel-h"><h2 id="h-scope">Telescope</h2><span class="aside" id="scope-aside">—</span></div>
         <select id="scope-preset" aria-label="Telescope preset"></select>
@@ -485,6 +491,7 @@ useful magnification= aperture ÷ 7  …up to…  aperture × 2</code>
 
   <footer>
     <p><b>A caveat worth knowing.</b> True field here is the classic <code>AFOV ÷ magnification</code> estimate. The exact answer uses the eyepiece's field stop diameter, which manufacturers don't always publish; the approximation runs a few percent optimistic on wide-angle eyepieces.</p>
+    <p id="photo-credits" hidden></p>
     <p>Angular sizes are real: the Moon 31′, Jupiter's disc 40″, Saturn's rings 44″ tip to tip, M31 nearly 3° end to end. Star fields are representative, not a survey catalogue. Never point a telescope at the Sun.</p>
   </footer>
 </div>
@@ -619,9 +626,9 @@ function cloud(g, cx, cy, rxAm, ryAm, rot, rgb, alpha){
   g.save();
   g.translate(cx, cy); g.rotate(rot); g.scale(1, ry / rx);
   const grd = g.createRadialGradient(0, 0, 0, 0, 0, rx);
-  grd.addColorStop(0,    "rgba(" + rgb + "," + alpha + ")");
-  grd.addColorStop(0.45, "rgba(" + rgb + "," + (alpha*0.55) + ")");
-  grd.addColorStop(1,    "rgba(" + rgb + ",0)");
+  grd.addColorStop(0,    rgba(rgb, alpha));
+  grd.addColorStop(0.45, rgba(rgb, alpha*0.55));
+  grd.addColorStop(1,    rgba(rgb, 0));
   g.fillStyle = grd;
   g.beginPath(); g.arc(0, 0, rx, 0, 6.2832); g.fill();
   g.restore();
@@ -901,6 +908,32 @@ function drawDoubleDouble(g){
   drawPair(g, px( 0.25), px( 1.72), sep, 0.25, 5.2, 5.5, 0.58, 0.55);
 }
 
+/* =========================================================
+   Drawing style
+   -----------------------------------------------------------
+   "visual"   — what a dark-adapted eye actually sees. Rods carry almost no
+                colour, so extended objects collapse to grey and go faint.
+                Planets and the Moon are bright enough to stay in colour.
+   "rendered" — the illustrated view: full colour, boosted contrast.
+   "photo"    — a real photograph where one has been supplied for the target,
+                otherwise it falls back to "rendered".
+   ========================================================= */
+
+let STYLE = "rendered";
+
+/* Collapse a colour toward its luminance and dim it. Used for nebulosity and
+   galaxies only — the things your eye genuinely sees in grey. */
+function styleRGB(rgb){
+  if (STYLE !== "visual") return rgb;
+  const p = rgb.split(",").map(Number);
+  const l = 0.30*p[0] + 0.59*p[1] + 0.11*p[2];
+  return [0,1,2].map(function(i){
+    return Math.round(Math.min(255, (l + (p[i] - l) * 0.18) * 0.94));
+  }).join(",");
+}
+function styleAlpha(a){ return STYLE === "visual" ? a * 0.62 : a; }
+function rgba(rgb, a){ return "rgba(" + styleRGB(rgb) + "," + styleAlpha(a) + ")"; }
+
 /* --- generic building blocks shared by the deep-sky renderers --- */
 
 /* Canvas blur turns hard geometry into nebulosity. Everything degrades to a
@@ -925,9 +958,9 @@ function poly(g, pts){
 function soft(g, x, y, rpx, rgb, alpha){
   if (rpx < 0.25 || alpha <= 0.004) return;
   const grd = g.createRadialGradient(x, y, 0, x, y, rpx);
-  grd.addColorStop(0,   "rgba(" + rgb + "," + alpha + ")");
-  grd.addColorStop(0.5, "rgba(" + rgb + "," + (alpha*0.45) + ")");
-  grd.addColorStop(1,   "rgba(" + rgb + ",0)");
+  grd.addColorStop(0,   rgba(rgb, alpha));
+  grd.addColorStop(0.5, rgba(rgb, alpha*0.45));
+  grd.addColorStop(1,   rgba(rgb, 0));
   g.fillStyle = grd;
   g.beginPath(); g.arc(x, y, rpx, 0, 6.2832); g.fill();
 }
@@ -962,7 +995,7 @@ function filament(g, cxAm, cyAm, radAm, a0, a1, widthAm, rgb, alpha, seed){
     g.filter = "blur(" + Math.max(1, w*0.5).toFixed(2) + "px)";
     g.lineCap = "round";
     for (let pass = 0; pass < 2; pass++){
-      g.strokeStyle = "rgba(" + rgb + "," + (alpha*(pass ? 0.55 : 1)) + ")";
+      g.strokeStyle = rgba(rgb, alpha*(pass ? 0.55 : 1));
       g.lineWidth = Math.max(0.8, w*(pass ? 1.7 : 0.75));
       g.beginPath();
       g.arc(px(cxAm), px(cyAm), px(radAm)*(pass ? 1.012 : 1), a0, a1);
@@ -1067,14 +1100,14 @@ function drawNorthAmerica(g){
   g.save();
   if (CAN_BLUR) g.filter = "blur(" + blur.toFixed(2) + "px)";
   const grd = g.createLinearGradient(0, px(-50), 0, px(48));
-  grd.addColorStop(0,    "rgba(146, 96, 94,.26)");
-  grd.addColorStop(0.45, "rgba(192,120,106,.36)");
-  grd.addColorStop(0.78, "rgba(206,132,112,.40)");
-  grd.addColorStop(1,    "rgba(150, 98, 96,.24)");
+  grd.addColorStop(0,    rgba("146,96,94",   0.26));
+  grd.addColorStop(0.45, rgba("192,120,106", 0.36));
+  grd.addColorStop(0.78, rgba("206,132,112", 0.40));
+  grd.addColorStop(1,    rgba("150,98,96",   0.24));
   poly(g, NGC7000_OUTLINE);
   g.fillStyle = grd; g.fill();
   /* the Cygnus Wall — the bright rim along the "Mexico" coast */
-  g.strokeStyle = "rgba(232,158,126,.34)";
+  g.strokeStyle = rgba("232,158,126", 0.34);
   g.lineWidth = Math.max(1, px(2.6));
   g.beginPath();
   g.moveTo(px(8), px(27)); g.lineTo(px(-2), px(23));
@@ -1203,6 +1236,61 @@ const TARGETS = [
 ];
 
 /* =========================================================
+   Photographs
+   -----------------------------------------------------------
+   Drop real images in here, keyed by target id. Nothing ships with the app:
+   astrophotos carry licences, so supplying them is your call, not mine.
+
+     fov    the width of the image in ARCMINUTES. This is the important one —
+            it is what lets a photograph be scaled to true angular size in the
+            field, exactly like the drawn renderings. Get it from the plate
+            solve, or from the object's known size and how much of the frame
+            it fills.
+     src    a path relative to this file (photos/m42.jpg), or a data: URI.
+            Use a data: URI if the page must work as a single self-contained
+            file; tools/inline-photos.mjs converts a folder of images for you.
+     rot    optional, degrees clockwise, if the image needs rotating.
+     credit optional; anything listed here is printed in the page footer.
+
+   See photos/README.md for the full walkthrough.
+   ========================================================= */
+
+const PHOTOS = {
+  /* "m42": {src:"photos/m42.jpg", fov:120, credit:"Your name, 2026"}, */
+};
+
+const PHOTO_CACHE = {};
+
+function photoFor(id){
+  const P = PHOTOS[id];
+  if (!P) return null;
+  let entry = PHOTO_CACHE[id];
+  if (!entry){
+    entry = PHOTO_CACHE[id] = {state:"loading", img:new Image()};
+    entry.img.onload  = function(){ entry.state = "ready";  update(); drawGallery(); };
+    entry.img.onerror = function(){ entry.state = "failed"; update(); };
+    entry.img.src = P.src;
+  }
+  return entry.state === "ready" ? {meta:P, img:entry.img} : null;
+}
+
+/* True to angular size: the image is laid down so its width spans P.fov arcminutes. */
+function drawPhoto(g2, shot){
+  const wPx = px(shot.meta.fov);
+  const hPx = wPx * (shot.img.naturalHeight / shot.img.naturalWidth);
+  g2.save();
+  if (shot.meta.rot) g2.rotate(shot.meta.rot * Math.PI / 180);
+  g2.drawImage(shot.img, -wPx/2, -hPx/2, wPx, hPx);
+  g2.restore();
+}
+
+function photoStatus(id){
+  if (!PHOTOS[id]) return "none";
+  const e = PHOTO_CACHE[id];
+  return e ? e.state : "loading";
+}
+
+/* =========================================================
    5. State
    ========================================================= */
 
@@ -1296,21 +1384,26 @@ function paintField(g2, S, target, o, opts){
   g2.fillStyle = sky; g2.fillRect(0, 0, S, S);
 
   g2.translate(S/2, S/2);
-
-  /* Only draw a layer that spans the whole visible field — otherwise its edge shows
-     up as a dense clump sitting in the middle of the view. */
-  const halfW = (S / 2) / scale;
-  const budget = opts.thumb ? 1 : 3;
   CTX.thumb = !!opts.thumb;
-  buildField(target.seed).forEach(function(L, li){
-    if (L.span < halfW || li >= budget) return;
-    L.stars.forEach(function(st){
-      if (st.x < -halfW || st.x > halfW || st.y < -halfW || st.y > halfW) return;
-      drawStar(g2, st.x * scale, st.y * scale, st.m, st.t, 1);
-    });
-  });
 
-  target.draw(g2);
+  const shot = STYLE === "photo" ? photoFor(target.id) : null;
+  if (shot){
+    /* A photograph brings its own stars — drawing synthetic ones over it would lie. */
+    drawPhoto(g2, shot);
+  } else {
+    /* Only draw a layer that spans the whole visible field — otherwise its edge shows
+       up as a dense clump sitting in the middle of the view. */
+    const halfW = (S / 2) / scale;
+    const budget = opts.thumb ? 1 : 3;
+    buildField(target.seed).forEach(function(L, li){
+      if (L.span < halfW || li >= budget) return;
+      L.stars.forEach(function(st){
+        if (st.x < -halfW || st.x > halfW || st.y < -halfW || st.y > halfW) return;
+        drawStar(g2, st.x * scale, st.y * scale, st.m, st.t, 1);
+      });
+    });
+    target.draw(g2);
+  }
   g2.restore();
 
   /* --- field stop rim --- */
@@ -1346,7 +1439,7 @@ function paintField(g2, S, target, o, opts){
 
   /* --- detail inset: the canvas resolves far less than an eye at a real eyepiece,
          so tight targets get an honest magnified crop drawn with the same physics --- */
-  const det = target.detail;
+  const det = STYLE === "photo" && photoFor(target.id) ? null : target.detail;
   if (det){
     const insetD = S * 0.30, ir = insetD / 2;
     const icx = S - ir - S*0.05, icy = S - ir - S*0.05;
@@ -1477,6 +1570,7 @@ function update(){
   set("ep-aside", state.epFocal + " mm · " + state.epAfov + "°");
   set("target-size", fmtAngle(target.w) + (Math.abs(target.w - target.h) > 0.01 ? " × " + fmtAngle(target.h) : ""));
   document.getElementById("target-note").textContent = target.note;
+  updateStyleNote(target);
 
   render();
   drawSchematic();
@@ -1787,6 +1881,74 @@ epSel.addEventListener("change", function(){
   if (!e) return;
   setEpFocal(e.f); setEpAfov(e.a); update();
 });
+
+/* drawing style */
+const STYLES = [
+  {id:"visual",   label:"Visual",
+   note:"What a dark-adapted eye really sees. Rods carry almost no colour, so nebulae and galaxies go grey and faint — the Moon and planets stay in colour because they are bright enough for daylight vision. This is the honest answer to \u201cwhat will I actually see?\u201d"},
+  {id:"rendered", label:"Rendered",
+   note:"An illustrated view: full colour and boosted contrast, closer to a long exposure than to the eyepiece. Best for learning the shapes and comparing sizes."},
+  {id:"photo",    label:"Photo",
+   note:""}
+];
+
+const segStyle = document.getElementById("seg-style");
+function applyStyle(id){
+  STYLE = id;
+  Array.prototype.forEach.call(segStyle.children, function(c){
+    c.setAttribute("aria-pressed", c.dataset.id === id ? "true" : "false");
+  });
+  update();
+  drawGallery();
+}
+STYLES.forEach(function(st){
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.textContent = st.label; btn.dataset.id = st.id;
+  btn.setAttribute("aria-pressed", st.id === STYLE ? "true" : "false");
+  btn.addEventListener("click", function(){ applyStyle(st.id); });
+  segStyle.appendChild(btn);
+});
+
+const photoCredits = document.getElementById("photo-credits");
+(function renderCredits(){
+  const lines = Object.keys(PHOTOS)
+    .filter(function(k){ return PHOTOS[k].credit; })
+    .map(function(k){
+      const t = TARGETS.filter(function(x){ return x.id === k; })[0];
+      return (t ? t.name : k) + " — " + PHOTOS[k].credit;
+    });
+  if (!lines.length) return;
+  photoCredits.hidden = false;
+  photoCredits.innerHTML = "<b>Photographs.</b> " + lines.join(" · ");
+})();
+
+function updateStyleNote(target){
+  const st = STYLES.filter(function(x){ return x.id === STYLE; })[0];
+  const supplied = Object.keys(PHOTOS).length;
+  let note = st.note;
+  if (STYLE === "photo"){
+    const status = photoStatus(target.id);
+    if (status === "ready"){
+      note = "Real photograph, scaled so it covers " + fmtAngle(PHOTOS[target.id].fov) +
+             " of sky — the same true angular scale as everything else here.";
+    } else if (status === "loading"){
+      note = "Loading the photograph for " + target.name + "\u2026";
+    } else if (status === "failed"){
+      note = "That photograph could not be loaded. Check the src path in the PHOTOS block near the top of the script.";
+    } else if (supplied){
+      note = "No photograph supplied for " + target.name + " yet, so the rendering is shown. " +
+             supplied + " of " + TARGETS.length + " targets have one.";
+    } else {
+      note = "No photographs are bundled with this app \u2014 astrophotos carry licences, so which ones to " +
+             "include is your call. Add your own by dropping files into the photos/ folder and listing them " +
+             "in the PHOTOS block near the top of the script; see photos/README.md. Until then this falls " +
+             "back to the rendering.";
+    }
+  }
+  document.getElementById("style-note").textContent = note;
+  document.getElementById("style-aside").textContent =
+    supplied + " of " + TARGETS.length + " photos";
+}
 
 /* barlow segmented control */
 const segBarlow = document.getElementById("seg-barlow");

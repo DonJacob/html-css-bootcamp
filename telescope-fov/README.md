@@ -16,6 +16,18 @@ size, a scale bar, and a magnified detail inset for targets far smaller than the
 double stars), telescope and eyepiece presets, a barlow/reducer strip from 0.5× to 3×, and
 every value editable by slider or typed number.
 
+**Drawn as** — three ways to see the same field:
+
+- **Visual** — what a dark-adapted eye really sees. Rods carry almost no colour, so nebulae
+  and galaxies go grey and faint, while the Moon and planets stay in colour because they are
+  bright enough for daylight vision. The honest answer to "what will I actually see?"
+- **Rendered** — the illustrated view: full colour, boosted contrast, closer to a long
+  exposure than to the eyepiece.
+- **Photo** — a real photograph, scaled to true angular size so swapping eyepieces reframes
+  it exactly the way it would reframe the real sky. None ship with the app; see
+  [`photos/README.md`](photos/README.md) to add your own. Falls back to the rendering for any
+  target without one.
+
 **The light path** — an optical schematic that redraws as you change the controls. Light
 converges to the focal plane and opens out again at the same angle, so the beam reaching the
 eyepiece mirrors the one that left the objective, and its width there is the exit pupil. Past
