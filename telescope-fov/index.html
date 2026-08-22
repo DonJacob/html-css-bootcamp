@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Eyepiece Bench</title>
+<title>Telescope Explorer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -363,8 +363,8 @@ footer p{margin:0 0 7px}
 <div class="wrap">
 
   <header class="mast">
-    <span class="eyebrow">Field of view bench</span>
-    <h1>Eyepiece Bench</h1>
+    <span class="eyebrow">Interactive field of view</span>
+    <h1>Telescope Explorer</h1>
     <p>Change one number at a time and watch the sky change with it. Every object is drawn at its true angular size inside the field your rig actually delivers.</p>
   </header>
 
@@ -472,8 +472,8 @@ useful magnification= aperture ÷ 7  …up to…  aperture × 2</code>
   <section class="panel" aria-labelledby="h-sch">
     <div class="panel-h"><h2 id="h-sch">The light path</h2><span class="aside" id="sch-aside">—</span></div>
     <p class="sch-swipe">Swipe the diagram sideways to follow the light all the way to the eye.</p>
-    <div class="sch-scroll"><svg id="schematic" viewBox="0 0 700 262" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="sch-desc"><title id="sch-desc">Optical schematic of the current telescope, barlow and eyepiece</title></svg></div>
-    <p class="sch-note">Lengths are compressed to fit — but the cone angle really does follow the focal ratio, the objective really does scale with aperture, and the exit pupil circle is drawn at its true size against a 7 mm dark-adapted eye. Shaded cells below are the values derived from the four you set.</p>
+    <div class="sch-scroll"><svg id="schematic" viewBox="0 0 700 276" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="sch-desc"><title id="sch-desc">Optical schematic of the current telescope, barlow and eyepiece</title></svg></div>
+    <p class="sch-note">Light converges to the focal plane and opens out again at the same angle, so the beam reaching the eyepiece is the mirror of the one that left the objective — and its width there <em>is</em> the exit pupil, which is why the exit pupil equals eyepiece focal length divided by focal ratio. Your eye goes at that exit pupil, and the whole illuminated field of the eyepiece subtends the apparent field angle there. Lengths are compressed to fit and the apparent-field wedge is indicative; the cone angle really is the focal ratio, and every number is exact. Shaded cells below are the values derived from the four you set.</p>
     <div class="params" id="params"></div>
   </section>
 
@@ -1508,18 +1508,35 @@ function clamp(v, lo, hi){ return Math.min(hi, Math.max(lo, v)); }
 function drawSchematic(){
   const o = optics();
   while (schematic.childNodes.length > 1) schematic.removeChild(schematic.lastChild);
-  const add = function(n){ schematic.appendChild(n); return n; };
-  const midY = 112;
 
-  /* The eye is anchored on the right and the telescope grows away from it, so the
-     eyepiece end never runs off the edge no matter how long the scope gets. */
+  /* Everything is drawn into a group, then the group is centred — a short instrument
+     draws short, and the diagram stays balanced instead of hugging the left edge. */
+  const grp = document.createElementNS(SVGNS, "g");
+  schematic.appendChild(grp);
+  const add = function(n){ grp.appendChild(n); return n; };
+  const midY = 122;
+
   const H       = 34 + 126 * clamp((state.aperture - 30) / 470, 0, 1);
-  const eyeX    = 634;
-  const epX     = eyeX - 98;
-  const epGap   = 20 + 44 * clamp((state.epFocal - 2) / 54, 0, 1);
-  const focusX  = epX - epGap;
+  const objX    = 64;
   const focalPx = clamp(H * o.fr * 0.5, 150, 330);
-  const objX    = focusX - focalPx;
+  const focusX  = objX + focalPx;
+  const epGap   = 44 + 74 * clamp((state.epFocal - 2) / 54, 0, 1);
+  const epX     = focusX + epGap;
+
+  /* Light converges to the focal plane and opens out again at the same angle, so the
+     beam reaching the eyepiece mirrors the one that left the objective. Its width
+     there is the exit pupil — that is why exit pupil = eyepiece focal length ÷ ratio. */
+  const slope   = (H/2) / focalPx;
+  const outHalf = Math.max(3.2, slope * epGap);
+
+  /* Eye relief is a fixed drawing distance so the apparent-field wedge stays
+     comparable between eyepieces: a wider field really does draw wider. */
+  const relief    = 52;
+  const pupilX    = epX + relief;
+  const fieldHalf = Math.min(54, Math.tan(state.epAfov * Math.PI / 360) * relief * 0.58);
+  const epH       = Math.max(fieldHalf*2 + 14, outHalf*2 + 16, 32);
+  const eyeFront  = pupilX - 4;
+  const rightEdge = eyeFront + 76;
 
   /* --- incoming starlight --- */
   for (let i = -2; i <= 2; i++){
@@ -1540,7 +1557,6 @@ function drawSchematic(){
   add(el("text", {class:"sch-key", x:objX, y:midY + H/2 + 17, "text-anchor":"middle"}, "OBJECTIVE"));
   add(el("text", {class:"sch-txt", x:objX, y:midY + H/2 + 33, "text-anchor":"middle"}, state.aperture + " mm"));
 
-  /* aperture dimension */
   const dimX = objX - 24;
   add(el("path", {class:"sch-solid", d:"M" + dimX + " " + (midY - H/2) + " V " + (midY + H/2)}));
   add(el("path", {class:"sch-solid", d:"M" + (dimX-4) + " " + (midY-H/2) + " h8 M" + (dimX-4) + " " + (midY+H/2) + " h8"}));
@@ -1548,60 +1564,78 @@ function drawSchematic(){
 
   /* --- barlow or reducer sitting in the cone --- */
   if (state.barlow !== 1){
-    const bX = objX + focalPx * 0.68;
-    const bH = Math.max(16, H * 0.32 * 1.3);
+    const bX = objX + focalPx * 0.7;
+    const bH = Math.max(16, H * 0.30 * 1.3);
     add(el("ellipse", {class:"sch-glass", cx:bX, cy:midY, rx:4, ry:bH/2}));
     add(el("text", {class:"sch-key", x:bX, y:midY - bH/2 - 8, "text-anchor":"middle"},
       (state.barlow > 1 ? "BARLOW " : "REDUCER ") + state.barlow + "×"));
   }
 
-  /* --- focal plane / field stop --- */
-  const fsMm = o.tfov * Math.PI / 180 * o.efl;              /* field stop diameter, mm */
-  const fsPx = clamp(fsMm * 1.5, 7, 46);
-  add(el("path", {class:"sch-dim", d:"M" + focusX + " " + (midY - 46) + " V " + (midY + 42)}));
-  add(el("path", {class:"sch-solid", d:"M" + (focusX-5) + " " + (midY - fsPx/2) + " h10 M" + (focusX-5) + " " + (midY + fsPx/2) + " h10"}));
+  /* --- the image: focal plane and field stop --- */
+  const fsMm = o.tfov * Math.PI / 180 * o.efl;
+  const fsPx = clamp(fsMm * 1.4, 8, 40);
+  add(el("path", {class:"sch-dim", d:"M" + focusX + " " + (midY - 46) + " V " + (midY + 46)}));
+  add(el("path", {class:"sch-solid", d:"M" + (focusX-6) + " " + (midY - fsPx/2) + " h12 M" + (focusX-6) + " " + (midY + fsPx/2) + " h12"}));
   add(el("text", {class:"sch-key", x:focusX, y:midY - 52, "text-anchor":"middle"}, "FOCAL PLANE"));
-  add(el("text", {class:"sch-txt", x:focusX - 9, y:midY - 76, "text-anchor":"end"}, "field stop " + fsMm.toFixed(1) + " mm"));
+  add(el("text", {class:"sch-txt", x:focusX, y:midY - 68, "text-anchor":"middle"}, "field stop " + fsMm.toFixed(1) + " mm"));
 
-  /* --- eyepiece and the apparent-field cone into the eye --- */
-  const epH = 26 + 22 * clamp((state.epAfov - 30) / 90, 0, 1);
-  add(el("path", {class:"sch-eye-cone",
-    d:"M" + focusX + " " + (midY - fsPx/2) + " L " + epX + " " + (midY - epH/2) +
-      " L " + eyeX + " " + (midY - epH*0.28) + " L " + eyeX + " " + (midY + epH*0.28) +
-      " L " + epX + " " + (midY + epH/2) + " L " + focusX + " " + (midY + fsPx/2) + " Z"}));
-  add(el("path", {class:"sch-ray", d:"M" + focusX + " " + (midY - fsPx/2) + " L " + epX + " " + (midY - epH/2)}));
-  add(el("path", {class:"sch-ray", d:"M" + focusX + " " + (midY + fsPx/2) + " L " + epX + " " + (midY + epH/2)}));
+  /* --- the cone re-opening from the focal point out to the eyepiece --- */
+  add(el("path", {class:"sch-cone",
+    d:"M" + focusX + " " + midY + " L " + epX + " " + (midY - outHalf) + " L " + epX + " " + (midY + outHalf) + " Z"}));
+  add(el("path", {class:"sch-ray", d:"M" + focusX + " " + midY + " L " + epX + " " + (midY - outHalf)}));
+  add(el("path", {class:"sch-ray", d:"M" + focusX + " " + midY + " L " + epX + " " + (midY + outHalf)}));
+
+  /* --- the edge of the image, which reaches the eyepiece off-axis --- */
+  [-1, 1].forEach(function(sgn){
+    add(el("path", {class:"sch-ray", "stroke-dasharray":"3 3",
+      d:"M" + focusX + " " + (midY + sgn*fsPx/2) + " L " + epX + " " + (midY + sgn*fieldHalf*0.9)}));
+  });
+
+  /* --- eyepiece --- */
   add(el("ellipse", {class:"sch-glass", cx:epX, cy:midY, rx:5, ry:epH/2}));
   add(el("text", {class:"sch-key", x:epX, y:midY + epH/2 + 17, "text-anchor":"middle"}, "EYEPIECE"));
   add(el("text", {class:"sch-txt", x:epX, y:midY + epH/2 + 33, "text-anchor":"middle"},
     state.epFocal + " mm · " + state.epAfov + "°"));
 
-  /* --- exit pupil, drawn against a 7 mm dark-adapted eye --- */
-  const refR = 7 * 2.2;
-  const pupilPx = clamp(o.exit * 2.2, 1.3, refR);
-  const pX = epX + 44;
-  add(el("path", {class:"sch-dim", d:"M" + (epX + 7) + " " + (midY - 6) + " L " + (pX - refR - 3) + " " + (midY - 52)}));
-  add(el("circle", {class:"sch-dim", cx:pX, cy:midY - 56, r:refR}));
-  add(el("circle", {class:"sch-glass", cx:pX, cy:midY - 56, r:pupilPx}));
-  add(el("text", {class:"sch-key", x:pX, y:midY - 56 - refR - 8, "text-anchor":"middle"}, "EXIT PUPIL"));
-  add(el("text", {class:"sch-txt", x:pX, y:midY - 56 + refR + 15, "text-anchor":"middle"}, o.exit.toFixed(1) + " mm"));
+  /* --- apparent field: the angle the eyepiece's whole field subtends at your eye --- */
+  add(el("path", {class:"sch-eye-cone",
+    d:"M" + pupilX + " " + midY + " L " + epX + " " + (midY - fieldHalf) +
+      " L " + epX + " " + (midY + fieldHalf) + " Z"}));
+  [-1, 1].forEach(function(sgn){
+    add(el("path", {class:"sch-ray", d:"M" + epX + " " + (midY + sgn*fieldHalf) + " L " + pupilX + " " + midY}));
+  });
+  const arcR = 22;
+  const ay = fieldHalf * arcR / relief;
+  add(el("path", {class:"sch-dim",
+    d:"M" + (pupilX - arcR) + " " + (midY - ay) + " A " + arcR + " " + arcR + " 0 0 0 " + (pupilX - arcR) + " " + (midY + ay)}));
+  add(el("text", {class:"sch-hot", x:pupilX - 26, y:midY + epH/2 + 49, "text-anchor":"middle"},
+    state.epAfov + "° apparent field"));
 
-  /* --- eye --- */
+  /* --- the collimated axial beam: its width is the exit pupil, and your eye goes here --- */
+  add(el("path", {class:"sch-eye-cone",
+    d:"M" + epX + " " + (midY - outHalf) + " H " + eyeFront + " V " + (midY + outHalf) + " H " + epX + " Z"}));
+  add(el("path", {class:"sch-solid", d:"M" + pupilX + " " + (midY - outHalf - 5) + " V " + (midY + outHalf + 5)}));
+  add(el("path", {class:"sch-dim", d:"M" + pupilX + " " + (midY + outHalf + 6) + " L " + (pupilX + 5) + " " + (midY + 26)}));
+  add(el("text", {class:"sch-key", x:pupilX + 9, y:midY + 30, "text-anchor":"start"}, "EXIT PUPIL"));
+
+  /* --- eye, pupil sitting on the exit pupil --- */
   add(el("path", {class:"sch-line",
-    d:"M" + (eyeX + 2) + " " + (midY - 17) + " q 26 17 0 34 q -26 -17 0 -34 Z"}));
-  add(el("circle", {class:"sch-line", cx:eyeX + 10, cy:midY, r:5}));
-  add(el("text", {class:"sch-key", x:eyeX + 8, y:midY + 33, "text-anchor":"middle"}, "EYE"));
+    d:"M" + eyeFront + " " + (midY - 17) + " q 26 17 0 34 q -26 -17 0 -34 Z"}));
+  add(el("circle", {class:"sch-line", cx:eyeFront + 8, cy:midY, r:5}));
+  add(el("text", {class:"sch-key", x:eyeFront + 12, y:midY - 24, "text-anchor":"middle"}, "EYE"));
 
   /* --- effective focal length dimension along the bottom --- */
-  const dimY = 232;
+  const dimY = 250;
   add(el("path", {class:"sch-dim", d:"M" + objX + " " + (midY + H/2 + 40) + " V " + dimY}));
-  add(el("path", {class:"sch-dim", d:"M" + focusX + " " + (midY + 60) + " V " + dimY}));
+  add(el("path", {class:"sch-dim", d:"M" + focusX + " " + (midY + 52) + " V " + dimY}));
   add(el("path", {class:"sch-solid", d:"M" + objX + " " + dimY + " H " + focusX}));
   add(el("path", {class:"sch-solid", d:"M" + objX + " " + (dimY-4) + " v8 M" + focusX + " " + (dimY-4) + " v8"}));
   add(el("text", {class:"sch-hot", x:(objX + focusX)/2, y:dimY - 8, "text-anchor":"middle"},
     "effective focal length " + Math.round(o.efl) + " mm"));
   add(el("text", {class:"sch-txt", x:(objX + focusX)/2, y:dimY + 19, "text-anchor":"middle"},
     "f/" + o.fr.toFixed(1) + " — the cone angle drawn above"));
+
+  grp.setAttribute("transform", "translate(" + Math.max(0, (700 - rightEdge) / 2).toFixed(1) + ",0)");
 
   document.getElementById("sch-aside").textContent =
     Math.round(o.mag) + "× · " + fmtTfov(o.tfov);

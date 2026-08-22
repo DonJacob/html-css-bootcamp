@@ -1,4 +1,4 @@
-# Eyepiece Bench
+# Telescope Explorer
 
 An interactive telescope field-of-view calculator. Pick a telescope, an eyepiece and a
 Barlow or reducer, then watch a real deep-sky or solar-system target redraw itself at true
@@ -16,10 +16,13 @@ size, a scale bar, and a magnified detail inset for targets far smaller than the
 double stars), telescope and eyepiece presets, a barlow/reducer strip from 0.5× to 3×, and
 every value editable by slider or typed number.
 
-**The light path** — an optical schematic that redraws as you change the controls. The
-objective scales with aperture, the light cone angle follows the focal ratio, a barlow or
-reducer appears in the cone when one is fitted, and the exit pupil is drawn at true size
-against a 7 mm dark-adapted eye. Below it, every parameter and every derived value.
+**The light path** — an optical schematic that redraws as you change the controls. Light
+converges to the focal plane and opens out again at the same angle, so the beam reaching the
+eyepiece mirrors the one that left the objective, and its width there is the exit pupil. Past
+the eyepiece it runs collimated to your eye, which sits at that exit pupil, where the
+eyepiece's whole illuminated field subtends the apparent field angle. The objective scales
+with aperture, the cone angle follows the focal ratio, and a barlow or reducer appears in the
+cone when one is fitted. Below it, every parameter and every derived value.
 
 **What fits in this field** — the whole selected category rendered as thumbnails in your
 current field, each labelled with its angular size and how much of the field it fills, so
