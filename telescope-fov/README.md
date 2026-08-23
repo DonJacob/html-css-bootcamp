@@ -85,6 +85,32 @@ real eyepiece.
 Every object is drawn procedurally on canvas — no image files — at its real angular size,
 from Saturn's 44″ rings to the Veil's 3° shell.
 
+## Telescope presets
+
+Every preset matches a real instrument, and each label matches its own arithmetic:
+
+| Preset | D | F | f/ratio | Real instrument |
+| --- | --- | --- | --- | --- |
+| 60 mm f/11.7 refractor | 60 | 700 | f/11.7 | 60/700 beginner achromat |
+| 80 mm f/6 ED refractor | 80 | 480 | f/6.0 | Orion ED80T CF / EON 80ED |
+| 102 mm f/12.7 Maksutov | 102 | 1300 | f/12.7 | Sky-Watcher Skymax 102 |
+| 114 mm f/7.9 Newtonian | 114 | 900 | f/7.9 | 114/900 beginner Newtonian |
+| 130 mm f/5 Newtonian | 130 | 650 | f/5.0 | Sky-Watcher Heritage 130P |
+| 150 mm f/5 Newtonian | 150 | 750 | f/5.0 | Sky-Watcher Explorer 150P |
+| 200 mm f/5.9 Newtonian | 203 | 1200 | f/5.9 | Orion SkyQuest XT8 |
+| 200 mm f/10 SCT | 203 | 2032 | f/10.0 | Celestron C8 |
+| 254 mm f/4.7 Dobsonian | 254 | 1200 | f/4.7 | Orion SkyQuest XT10 |
+| 305 mm f/4.9 Dobsonian | 305 | 1500 | f/4.9 | Orion SkyQuest XT12 |
+| 406 mm f/4.5 Dobsonian | 406 | 1830 | f/4.5 | Meade LightBridge 16″ |
+
+Aperture and focal length are independent sliders, so moving one alone walks the focal ratio
+somewhere no telescope is built — drag aperture down from 203 mm with the focal length parked
+at 1200 mm and you arrive at f/20. Two things guard against that: the focal ratio readout
+carries a verdict (typical, very fast, very slow, or *not a real telescope* outside roughly
+f/3.3–f/20), and **Hold the focal ratio while dragging** makes the partner value follow, so
+aperture and focal length move together and the ratio stays put. Picking a preset
+re-establishes the ratio that instrument is built at.
+
 ## Caveats
 
 True field uses the classic `AFOV ÷ magnification` estimate rather than the eyepiece field

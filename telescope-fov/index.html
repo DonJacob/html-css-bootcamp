@@ -223,6 +223,30 @@ input[type=range]::-moz-range-thumb{
   border:3px solid var(--surface);box-shadow:0 1px 5px rgba(0,0,0,.3);
 }
 
+/* ---------- f-ratio lock ---------- */
+.lock{
+  position:relative;display:flex;align-items:center;gap:9px;width:100%;
+  font:inherit;font-size:12.5px;font-weight:500;color:var(--ink-2);
+  background:var(--surface-2);border:1px solid var(--line);
+  border-radius:9px;padding:9px 11px;cursor:pointer;text-align:left;
+  transition:border-color .15s,color .15s,background .15s;
+}
+.lock:hover{border-color:var(--ink-3)}
+.lock::before{                       /* track */
+  content:"";flex:0 0 auto;width:32px;height:18px;border-radius:999px;
+  background:var(--line);transition:background .18s;
+}
+.lock::after{                        /* knob */
+  content:"";position:absolute;left:14px;top:50%;
+  width:12px;height:12px;border-radius:50%;background:var(--surface);
+  transform:translateY(-50%);transition:transform .18s;
+}
+.lock[aria-pressed="true"]{
+  color:var(--accent-ink);border-color:var(--accent);background:var(--accent-soft);
+}
+.lock[aria-pressed="true"]::before{background:var(--accent)}
+.lock[aria-pressed="true"]::after{transform:translateY(-50%) translateX(14px)}
+
 /* ---------- segmented (barlow) ---------- */
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg button{
@@ -413,6 +437,9 @@ footer p{margin:0 0 7px}
           </div>
           <input type="range" id="fl" min="200" max="4000" step="5" aria-label="Telescope focal length in millimetres">
         </div>
+        <button type="button" class="lock" id="fr-lock" aria-pressed="false">
+          <span id="fr-lock-label">Hold the focal ratio while dragging</span>
+        </button>
       </section>
 
       <section class="panel" aria-labelledby="h-barlow">
@@ -447,7 +474,7 @@ footer p{margin:0 0 7px}
           <div class="tile"><span class="tile-k">True field</span><span class="tile-v" id="r-tfov">—</span><span class="tile-s" id="r-tfov-s"></span></div>
           <div class="tile"><span class="tile-k">Apparent field</span><span class="tile-v" id="r-afov">—</span><span class="tile-s" id="r-afov-s"></span></div>
           <div class="tile"><span class="tile-k">Exit pupil</span><span class="tile-v" id="r-exit">—</span><span class="tile-s" id="r-exit-s"></span><span class="pill" id="r-exit-p"></span></div>
-          <div class="tile"><span class="tile-k">Focal ratio</span><span class="tile-v" id="r-fr">—</span><span class="tile-s" id="r-fr-s"></span></div>
+          <div class="tile"><span class="tile-k">Focal ratio</span><span class="tile-v" id="r-fr">—</span><span class="tile-s" id="r-fr-s"></span><span class="pill" id="r-fr-p"></span></div>
           <div class="tile"><span class="tile-k">Resolving limit</span><span class="tile-v" id="r-res">—</span><span class="tile-s" id="r-res-s"></span></div>
           <div class="tile"><span class="tile-k">Light grasp</span><span class="tile-v" id="r-grasp">—</span><span class="tile-s" id="r-grasp-s"></span></div>
           <div class="tile"><span class="tile-k">Surface brightness</span><span class="tile-v" id="r-sb">—</span><span class="tile-s" id="r-sb-s"></span></div>
@@ -1560,7 +1587,30 @@ function update(){
 
   set("r-exit", o.exit.toFixed(2) + " mm");
   set("r-fr", "f/" + o.fr.toFixed(1));
-  set("r-fr-s", "Faster ratios spread the same light over less area — brighter, wider, harder on eyepieces.");
+  /* Production telescopes live roughly between f/3.3 (fast astrographs) and f/15 (long
+     refractors and some Maksutovs). Outside that the numbers still compute, but you have
+     built something nobody sells — usually by moving one slider and not the other. */
+  if (o.fr < 3.3 || o.fr > 20){
+    pill("r-fr-p", "Not a real telescope", "bad");
+    set("r-fr-s", o.fr > 20
+        ? "No production scope is this slow. " + state.focal + " mm of focal length on a " +
+          state.aperture + " mm aperture — one of the two needs to move."
+        : "Faster than any production scope. " + state.focal + " mm of focal length on a " +
+          state.aperture + " mm aperture — one of the two needs to move.");
+  } else if (o.fr < 4){
+    pill("r-fr-p", "Very fast", "warn");
+    set("r-fr-s", "Astrograph territory. Wide and bright, but demanding on eyepieces and hard to collimate.");
+  } else if (o.fr > 15){
+    pill("r-fr-p", "Very slow", "warn");
+    set("r-fr-s", "Longer than almost anything sold. Narrow fields, easy on eyepieces, long tube.");
+  } else {
+    pill("r-fr-p", "Typical", "ok");
+    set("r-fr-s", o.fr < 6
+        ? "A fast scope: wide fields and bright images, but it asks more of your eyepieces."
+        : o.fr > 10
+        ? "A slow scope: narrow fields, high magnification per eyepiece, forgiving of cheap eyepieces."
+        : "Middle of the road — the ratio most general-purpose telescopes are built at.");
+  }
   set("r-efl", Math.round(o.efl) + " mm");
   set("r-efl-s", state.barlow === 1 ? "Native focal length, nothing in the light path."
       : (state.barlow > 1 ? "Barlow stretches the light cone " : "Reducer compresses the light cone ") + state.barlow + "×.");
@@ -1867,6 +1917,36 @@ function drawGallery(){
    8. Wiring
    ========================================================= */
 
+/* Aperture and focal length are independent sliders, so moving one alone walks the
+   focal ratio somewhere no telescope is built. With the lock on, the partner follows. */
+let frLocked = false, frRatio = 1200 / 203;
+
+function setBoth(aperture, focal){
+  state.aperture = aperture;
+  state.focal = focal;
+  document.getElementById("ap").value = aperture;
+  document.getElementById("ap-n").value = Math.round(aperture);
+  document.getElementById("fl").value = focal;
+  document.getElementById("fl-n").value = Math.round(focal);
+}
+
+/* Hold the ratio exactly: if the partner would leave its slider, stop both at the edge. */
+function holdRatio(driver, v){
+  const AP = [30, 500], FL = [200, 4000];
+  let a, f;
+  if (driver === "aperture"){
+    a = v; f = a * frRatio;
+    if (f < FL[0]) { f = FL[0]; a = f / frRatio; }
+    if (f > FL[1]) { f = FL[1]; a = f / frRatio; }
+  } else {
+    f = v; a = f / frRatio;
+    if (a < AP[0]) { a = AP[0]; f = a * frRatio; }
+    if (a > AP[1]) { a = AP[1]; f = a * frRatio; }
+  }
+  setBoth(Math.min(AP[1], Math.max(AP[0], Math.round(a))),
+          Math.min(FL[1], Math.max(FL[0], Math.round(f))));
+}
+
 function bindPair(rangeId, numId, key, decimals){
   const r = document.getElementById(rangeId);
   const n = document.getElementById(numId);
@@ -1875,6 +1955,12 @@ function bindPair(rangeId, numId, key, decimals){
     if (isNaN(v)) return;
     const lo = parseFloat(r.min), hi = parseFloat(r.max);
     v = Math.min(hi, Math.max(lo, v));
+    if (frLocked && (key === "aperture" || key === "focal")){
+      holdRatio(key, v);
+      markCustom(key);
+      update();
+      return;
+    }
     state[key] = v;
     if (from !== "range") r.value = v;
     if (from !== "num")   n.value = decimals ? v.toFixed(decimals) : v;
@@ -1922,13 +2008,33 @@ fillSelect(epSel, EYEPIECES);
 scopeSel.addEventListener("change", function(){
   const s = SCOPES.filter(function(x){ return x.n === scopeSel.value; })[0];
   if (!s) return;
-  setAperture(s.a); setFocal(s.f); update();
+  setAperture(s.a); setFocal(s.f);
+  frRatio = s.f / s.a;                 /* a preset re-establishes the ratio it is built at */
+  refreshLockLabel();
+  update();
 });
 epSel.addEventListener("change", function(){
   const e = EYEPIECES.filter(function(x){ return x.n === epSel.value; })[0];
   if (!e) return;
   setEpFocal(e.f); setEpAfov(e.a); update();
 });
+
+/* focal-ratio lock */
+const frLock = document.getElementById("fr-lock");
+const frLockLabel = document.getElementById("fr-lock-label");
+
+function refreshLockLabel(){
+  frLockLabel.textContent = frLocked
+    ? "Holding f/" + frRatio.toFixed(1) + " — aperture and focal length move together"
+    : "Hold the focal ratio while dragging";
+}
+frLock.addEventListener("click", function(){
+  frLocked = !frLocked;
+  if (frLocked) frRatio = state.focal / state.aperture;
+  frLock.setAttribute("aria-pressed", frLocked ? "true" : "false");
+  refreshLockLabel();
+});
+refreshLockLabel();
 
 /* drawing style */
 const STYLES = [
