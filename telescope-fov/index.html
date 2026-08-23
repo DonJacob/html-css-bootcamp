@@ -449,6 +449,8 @@ footer p{margin:0 0 7px}
           <div class="tile"><span class="tile-k">Exit pupil</span><span class="tile-v" id="r-exit">—</span><span class="tile-s" id="r-exit-s"></span><span class="pill" id="r-exit-p"></span></div>
           <div class="tile"><span class="tile-k">Focal ratio</span><span class="tile-v" id="r-fr">—</span><span class="tile-s" id="r-fr-s"></span></div>
           <div class="tile"><span class="tile-k">Resolving limit</span><span class="tile-v" id="r-res">—</span><span class="tile-s" id="r-res-s"></span></div>
+          <div class="tile"><span class="tile-k">Light grasp</span><span class="tile-v" id="r-grasp">—</span><span class="tile-s" id="r-grasp-s"></span></div>
+          <div class="tile"><span class="tile-k">Surface brightness</span><span class="tile-v" id="r-sb">—</span><span class="tile-s" id="r-sb-s"></span></div>
           <div class="tile"><span class="tile-k">Useful mag range</span><span class="tile-v" id="r-use">—</span><span class="tile-s" id="r-use-s"></span><span class="pill" id="r-use-p"></span></div>
           <div class="tile"><span class="tile-k">Effective focal length</span><span class="tile-v" id="r-efl">—</span><span class="tile-s" id="r-efl-s"></span></div>
           <div class="tile"><span class="tile-k">Target fills</span><span class="tile-v" id="r-fit">—</span><span class="tile-s" id="r-fit-s"></span><span class="pill" id="r-fit-p"></span></div>
@@ -466,6 +468,7 @@ focal ratio         = effective focal length ÷ aperture
 Dawes limit (arcsec)= 116 ÷ aperture in mm
 useful magnification= aperture ÷ 7  …up to…  aperture × 2</code>
             <p><b>The trade you can't escape:</b> a shorter eyepiece raises magnification, which shrinks the true field and shrinks the exit pupil — so the image gets bigger, narrower and dimmer all at once. A wider apparent field buys back field without giving up magnification, which is the whole reason wide-angle eyepieces cost what they do.</p>
+            <p><b>Why aperture changes the picture and magnification doesn't come free.</b> Magnification is set by the two focal lengths, so it does not depend on aperture at all. Open the aperture at a fixed eyepiece and the exit pupil grows in proportion — and the brightness of an extended object goes as the <em>square</em> of the exit pupil, until it passes about 7 mm and your iris starts clipping the beam, at which point the extra aperture buys nothing at that power. Put M31 at 92× and try it: a 60 mm gives a 0.65 mm exit pupil and a barely-there smudge, a 300 mm gives 3.25 mm and shows the dust lanes. Same magnification, same field. Run it the other way and the same law is the real cost of high power — every step up in magnification shrinks the exit pupil and dims what you are looking at.</p>
             <p><b>Aperture does something the eyepiece can't.</b> Swap eyepieces all day and the resolving limit never moves — only aperture changes it. Watch the star field thin out as you shrink the aperture: fewer stars are bright enough to reach you, and a close pair merges into one blur the moment the Dawes limit grows past its separation — try ε Lyrae at 40 mm, then at 150 mm.</p>
           </div>
         </details>
@@ -874,11 +877,11 @@ function drawM57(g){
   if (R < 1.2){ drawStar(g, 0, 0, 8.8, 0.6, 1); return; }
   g.save(); g.translate(0,0); g.scale(1, 0.72);
   const grd = g.createRadialGradient(0,0,0,0,0,R);
-  grd.addColorStop(0,   "rgba(150,190,180,.10)");
-  grd.addColorStop(0.42,"rgba(160,200,186,.14)");
-  grd.addColorStop(0.66,"rgba(206,232,214,.52)");
-  grd.addColorStop(0.86,"rgba(178,198,220,.30)");
-  grd.addColorStop(1,   "rgba(178,198,220,0)");
+  grd.addColorStop(0,   rgba("150,190,180", 0.10));
+  grd.addColorStop(0.42,rgba("160,200,186", 0.14));
+  grd.addColorStop(0.66,rgba("206,232,214", 0.52));
+  grd.addColorStop(0.86,rgba("178,198,220", 0.30));
+  grd.addColorStop(1,   rgba("178,198,220", 0));
   g.fillStyle = grd; g.beginPath(); g.arc(0,0,R,0,6.2832); g.fill();
   g.restore();
   drawStar(g, 0, 0, 15.0, 0.85, 1);
@@ -921,6 +924,23 @@ function drawDoubleDouble(g){
 
 let STYLE = "rendered";
 
+/* How bright an extended object looks at the eye depends on the exit pupil, not on
+   aperture directly — but magnification does not depend on aperture either, so opening
+   the aperture at a fixed eyepiece raises the exit pupil and genuinely brightens the
+   view, as the square of it. Past a dark-adapted 7 mm pupil the extra beam is clipped
+   by your iris and buys nothing, which is the same reason a big scope at very low power
+   wastes aperture. Working the other way, winding up magnification shrinks the exit
+   pupil and dims everything — the real cost of high power on faint objects. */
+const EYE_PUPIL = 7, REF_PUPIL = 3;
+
+function surfaceGain(exit){
+  const eff = Math.min(exit, EYE_PUPIL) / REF_PUPIL;
+  const raw = eff * eff;                                  /* the true ratio */
+  if (STYLE === "photo")  return 1;                       /* a photograph is a photograph */
+  if (STYLE === "visual") return clamp(raw, 0.10, 1.70);  /* faint fuzzies really do vanish */
+  return clamp(Math.pow(raw, 0.40), 0.62, 1.30);          /* illustrated: compressed, still responsive */
+}
+
 /* Collapse a colour toward its luminance and dim it. Used for nebulosity and
    galaxies only — the things your eye genuinely sees in grey. */
 function styleRGB(rgb){
@@ -931,7 +951,10 @@ function styleRGB(rgb){
     return Math.round(Math.min(255, (l + (p[i] - l) * 0.18) * 0.94));
   }).join(",");
 }
-function styleAlpha(a){ return STYLE === "visual" ? a * 0.62 : a; }
+function styleAlpha(a){
+  const g = (CTX && CTX.gain != null) ? CTX.gain : 1;
+  return (STYLE === "visual" ? a * 0.62 : a) * g;
+}
 function rgba(rgb, a){ return "rgba(" + styleRGB(rgb) + "," + styleAlpha(a) + ")"; }
 
 /* --- generic building blocks shared by the deep-sky renderers --- */
@@ -1370,7 +1393,7 @@ function paintField(g2, S, target, o, opts){
   const tfovAm = o.tfov * 60;
   const scale  = R / (tfovAm / 2);              /* px per arcmin */
   const prev = CTX;
-  CTX = {s:scale, dawes:o.dawes/60, limit:o.limit, unit:S/390};
+  CTX = {s:scale, dawes:o.dawes/60, limit:o.limit, unit:S/390, gain:surfaceGain(o.exit)};
 
   g2.clearRect(0, 0, S, S);
 
@@ -1402,7 +1425,17 @@ function paintField(g2, S, target, o, opts){
         drawStar(g2, st.x * scale, st.y * scale, st.m, st.t, 1);
       });
     });
-    target.draw(g2);
+    /* Detail finer than the Dawes limit cannot survive the aperture. At low power the
+       eye is the limit and this is sub-pixel; wind the power up and it starts to bite. */
+    const blurPx = px(CTX.dawes) * 0.5;
+    if (CAN_BLUR && blurPx > 0.45){
+      g2.save();
+      g2.filter = "blur(" + Math.min(blurPx, 14).toFixed(2) + "px)";
+      target.draw(g2);
+      g2.restore();
+    } else {
+      target.draw(g2);
+    }
   }
   g2.restore();
 
@@ -1449,11 +1482,16 @@ function paintField(g2, S, target, o, opts){
       g2.save();
       g2.beginPath(); g2.arc(icx, icy, ir, 0, 6.2832); g2.clip();
       g2.fillStyle = "#04060C"; g2.fillRect(icx - ir, icy - ir, insetD, insetD);
-      CTX = {s:iscale, dawes:o.dawes/60, limit:o.limit, unit:S/390};
+      CTX = {s:iscale, dawes:o.dawes/60, limit:o.limit, unit:S/390, gain:surfaceGain(o.exit)};
       g2.translate(icx - det.at[0]*iscale, icy - det.at[1]*iscale);
+      /* The inset magnifies far past the main view, so this is where the aperture's
+         resolving limit actually becomes visible — a small scope softens the fine
+         detail here while a large one holds it. */
+      const iBlur = px(CTX.dawes) * 0.5;
+      if (CAN_BLUR && iBlur > 0.45) g2.filter = "blur(" + Math.min(iBlur, 14).toFixed(2) + "px)";
       target.draw(g2);
       g2.restore();
-      CTX = {s:scale, dawes:o.dawes/60, limit:o.limit, unit:S/390};
+      CTX = {s:scale, dawes:o.dawes/60, limit:o.limit, unit:S/390, gain:surfaceGain(o.exit)};
 
       g2.save();
       g2.strokeStyle = line; g2.lineWidth = 1.5;
@@ -1526,6 +1564,16 @@ function update(){
   set("r-efl", Math.round(o.efl) + " mm");
   set("r-efl-s", state.barlow === 1 ? "Native focal length, nothing in the light path."
       : (state.barlow > 1 ? "Barlow stretches the light cone " : "Reducer compresses the light cone ") + state.barlow + "×.");
+
+  const grasp = Math.pow(state.aperture / EYE_PUPIL, 2);
+  set("r-grasp", Math.round(grasp) + "×");
+  set("r-grasp-s", "More light collected than your naked eye. Aperture is the only control that raises this.");
+
+  const sb = Math.pow(Math.min(o.exit, EYE_PUPIL) / REF_PUPIL, 2);
+  set("r-sb", sb.toFixed(2) + "×");
+  set("r-sb-s", o.exit > EYE_PUPIL
+      ? "Relative to a 3 mm exit pupil. Capped — your iris is clipping the beam, so extra aperture is wasted at this power."
+      : "Relative to a 3 mm exit pupil. Scales with the square of the exit pupil, which is what makes a bigger scope brighter at the same magnification.");
 
   set("r-res", o.dawes.toFixed(2) + "″");
   set("r-res-s", target.sep

@@ -52,9 +52,21 @@ you can see at a glance which objects your rig frames and which overflow it.
 | Dawes limit | 116 ÷ aperture in mm (arcseconds) |
 | Useful magnification | aperture ÷ 7 up to aperture × 2 |
 
-Aperture also sets the limiting magnitude of the drawn star field (`2.7 + 5·log₁₀ D`), so a
-smaller scope visibly shows fewer stars, and the Dawes limit sets the diffraction size of
-every star drawn — which is why ε Lyrae's pairs merge below roughly 50 mm and split above it.
+Aperture also drives what the objects themselves look like, not just the numbers:
+
+- **Surface brightness** scales with the square of the exit pupil, capped at a 7 mm
+  dark-adapted pupil. Since magnification does not depend on aperture, opening the aperture at
+  a fixed eyepiece raises the exit pupil and genuinely brightens the view — M31 at 92× is a
+  barely-there smudge in a 60 mm (0.65 mm exit pupil) and shows dust lanes in a 300 mm
+  (3.25 mm). Past a 7 mm exit pupil your iris clips the beam and the extra aperture is wasted.
+  Running the law backwards is the real cost of high power: more magnification, smaller exit
+  pupil, dimmer image.
+- **Resolution** — detail finer than the Dawes limit is blurred away. Sub-pixel at low power,
+  clearly visible in the magnified detail inset, where a 60 mm smears Saturn's Cassini division
+  that a 400 mm holds crisp.
+- **Limiting magnitude** of the star field (`2.7 + 5·log₁₀ D`), so a smaller scope shows fewer
+  stars, and the Dawes limit sets the diffraction size of every star drawn — which is why
+  ε Lyrae's pairs merge below roughly 50 mm and split above it.
 
 Targets whose interesting detail is far smaller than the field get a magnified inset drawn
 with the same physics, because the canvas resolves much less angular detail than an eye at a
