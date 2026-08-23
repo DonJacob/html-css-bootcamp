@@ -327,6 +327,34 @@ input[type=range]::-moz-range-thumb{
 .param.derived{background:var(--surface-2)}
 .param.derived .pv{color:var(--accent-ink)}
 
+/* ---------- instrument table ---------- */
+.scopes{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:9px}
+.srow{
+  display:flex;flex-direction:column;gap:3px;align-items:stretch;
+  background:transparent;border:1px solid var(--line);border-radius:11px;
+  padding:11px 12px 12px;cursor:pointer;font:inherit;text-align:left;
+  transition:border-color .15s,background .15s;
+}
+.srow:hover{border-color:var(--ink-3)}
+.srow[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.srow .stop{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.srow .sname{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.25}
+.srow .sfr{
+  flex:0 0 auto;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;
+  font-weight:500;color:var(--accent-ink);font-variant-numeric:tabular-nums;
+}
+.srow .sspec{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;
+  color:var(--ink-2);font-variant-numeric:tabular-nums;
+}
+.srow .sreal{font-size:12px;color:var(--ink-3);line-height:1.35}
+.srow .skind{
+  font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:600;margin-top:2px;
+}
+.scope-note{margin:-4px 0 14px;font-size:12.5px;color:var(--ink-3)}
+.scope-note b{color:var(--ink-2);font-weight:600}
+
 /* ---------- gallery ---------- */
 .gallery{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));
@@ -423,6 +451,7 @@ footer p{margin:0 0 7px}
       <section class="panel" aria-labelledby="h-scope">
         <div class="panel-h"><h2 id="h-scope">Telescope</h2><span class="aside" id="scope-aside">—</span></div>
         <select id="scope-preset" aria-label="Telescope preset"></select>
+        <p class="scope-note" id="scope-real"></p>
         <div class="ctl">
           <div class="ctl-top">
             <label for="ap">Aperture</label>
@@ -513,6 +542,13 @@ useful magnification= aperture ÷ 7  …up to…  aperture × 2</code>
     <div class="params" id="params"></div>
   </section>
 
+  <!-- ======= INSTRUMENTS ======= -->
+  <section class="panel" aria-labelledby="h-inst">
+    <div class="panel-h"><h2 id="h-inst">The scopes behind the presets</h2><span class="aside" id="inst-aside">—</span></div>
+    <div class="scopes" id="scopes" role="group" aria-label="Telescope presets"></div>
+    <p class="sch-note">Aperture and focal length come from each maker's published figures; the focal ratio is computed from them rather than stored, so what you see here is exactly what the app calculates with. Pick any one to load it.</p>
+  </section>
+
   <!-- ======= GALLERY ======= -->
   <section class="panel" aria-labelledby="h-gal">
     <div class="panel-h"><h2 id="h-gal">What fits in this field</h2><span class="aside" id="gal-aside">—</span></div>
@@ -533,18 +569,33 @@ useful magnification= aperture ÷ 7  …up to…  aperture × 2</code>
    1. Data
    ========================================================= */
 
+/* Each preset is modelled on a real instrument. Where a size is a whole class of
+   near-identical scopes rather than one product, the class is named instead — no point
+   inventing a model number. f-ratios are computed from a and f, never stored, so the
+   table can never drift from the numbers the app actually uses. */
 const SCOPES = [
-  {n:"60 mm f/11.7 refractor",  a:60,  f:700},
-  {n:"80 mm f/6 ED refractor",  a:80,  f:480},
-  {n:"102 mm f/12.7 Maksutov",  a:102, f:1300},
-  {n:"114 mm f/7.9 Newtonian",  a:114, f:900},
-  {n:"130 mm f/5 Newtonian",    a:130, f:650},
-  {n:"150 mm f/5 Newtonian",    a:150, f:750},
-  {n:"200 mm f/5.9 Newtonian",  a:203, f:1200},
-  {n:"200 mm f/10 SCT",         a:203, f:2032},
-  {n:"254 mm f/4.7 Dobsonian",  a:254, f:1200},
-  {n:"305 mm f/4.9 Dobsonian",  a:305, f:1500},
-  {n:"406 mm f/4.5 Dobsonian",  a:406, f:1830}
+  {n:"60 mm f/11.7 refractor",  a:60,  f:700,
+   real:"The classic 60/700 starter achromat", kind:"Refractor"},
+  {n:"80 mm f/6 ED refractor",  a:80,  f:480,
+   real:"Orion ED80T CF apochromat", kind:"Refractor"},
+  {n:"102 mm f/12.7 Maksutov",  a:102, f:1300,
+   real:"Sky-Watcher Skymax 102", kind:"Maksutov-Cassegrain"},
+  {n:"114 mm f/7.9 Newtonian",  a:114, f:900,
+   real:"The common 114/900 beginner reflector", kind:"Newtonian reflector"},
+  {n:"130 mm f/5 Newtonian",    a:130, f:650,
+   real:"Sky-Watcher Heritage 130P tabletop", kind:"Newtonian reflector"},
+  {n:"150 mm f/5 Newtonian",    a:150, f:750,
+   real:"Sky-Watcher Explorer 150P", kind:"Newtonian reflector"},
+  {n:"200 mm f/5.9 Newtonian",  a:203, f:1200,
+   real:"Orion SkyQuest XT8", kind:"Newtonian reflector"},
+  {n:"200 mm f/10 SCT",         a:203, f:2032,
+   real:"Celestron C8 / NexStar 8SE", kind:"Schmidt-Cassegrain"},
+  {n:"254 mm f/4.7 Dobsonian",  a:254, f:1200,
+   real:"Orion SkyQuest XT10", kind:"Newtonian reflector"},
+  {n:"305 mm f/4.9 Dobsonian",  a:305, f:1500,
+   real:"Orion SkyQuest XT12", kind:"Newtonian reflector"},
+  {n:"406 mm f/4.5 Dobsonian",  a:406, f:1830,
+   real:"16-inch truss Dob, Meade LightBridge class", kind:"Newtonian reflector"}
 ];
 
 const EYEPIECES = [
@@ -1586,6 +1637,8 @@ function update(){
       : "A classic porthole view. Cheap, sharp, and you will nudge the scope often.");
 
   set("r-exit", o.exit.toFixed(2) + " mm");
+  refreshScopeTable();
+
   set("r-fr", "f/" + o.fr.toFixed(1));
   /* Production telescopes live roughly between f/3.3 (fast astrographs) and f/15 (long
      refractors and some Maksutovs). Outside that the numbers still compute, but you have
@@ -2018,6 +2071,55 @@ epSel.addEventListener("change", function(){
   if (!e) return;
   setEpFocal(e.f); setEpAfov(e.a); update();
 });
+
+/* the instrument table, which doubles as a scope picker */
+const scopesEl = document.getElementById("scopes");
+const scopeRows = [];
+
+function loadScope(sc){
+  setAperture(sc.a); setFocal(sc.f);
+  frRatio = sc.f / sc.a;
+  scopeSel.value = sc.n;
+  refreshLockLabel();
+  update();
+  drawGallery();
+}
+
+SCOPES.forEach(function(sc){
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.className = "srow";
+  const fr = sc.f / sc.a;
+  btn.innerHTML =
+    '<span class="stop"><span class="sname"></span><span class="sfr"></span></span>' +
+    '<span class="sspec"></span><span class="sreal"></span><span class="skind"></span>';
+  btn.querySelector(".sname").textContent = sc.n.replace(/ f\/[\d.]+/, "");
+  btn.querySelector(".sfr").textContent   = "f/" + fr.toFixed(1);
+  btn.querySelector(".sspec").textContent = sc.a + " mm aperture · " + sc.f + " mm FL";
+  btn.querySelector(".sreal").textContent = sc.real;
+  btn.querySelector(".skind").textContent = sc.kind;
+  btn.addEventListener("click", function(){ loadScope(sc); });
+  scopesEl.appendChild(btn);
+  scopeRows.push({sc:sc, btn:btn});
+});
+document.getElementById("inst-aside").textContent = SCOPES.length + " instruments";
+
+function refreshScopeTable(){
+  const hit = SCOPES.filter(function(x){
+    return x.a === state.aperture && x.f === state.focal;
+  })[0];
+  scopeRows.forEach(function(r){
+    r.btn.setAttribute("aria-pressed", hit && r.sc.n === hit.n ? "true" : "false");
+  });
+  const note = document.getElementById("scope-real");
+  if (hit){
+    note.innerHTML = "";
+    const b = document.createElement("b"); b.textContent = hit.real;
+    note.appendChild(b);
+    note.appendChild(document.createTextNode(" · " + hit.kind));
+  } else {
+    note.textContent = "Custom — not one of the catalogue scopes.";
+  }
+}
 
 /* focal-ratio lock */
 const frLock = document.getElementById("fr-lock");

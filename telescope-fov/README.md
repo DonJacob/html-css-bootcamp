@@ -87,7 +87,10 @@ from Saturn's 44″ rings to the Veil's 3° shell.
 
 ## Telescope presets
 
-Every preset matches a real instrument, and each label matches its own arithmetic:
+The **scopes behind the presets** panel in the app lists all of these, and each card is also a
+picker — tap one to load it. Every preset matches a real instrument, and each label matches its
+own arithmetic. The f-ratio shown is computed from aperture and focal length rather than
+stored, so the table can never drift from the numbers the app calculates with:
 
 | Preset | D | F | f/ratio | Real instrument |
 | --- | --- | --- | --- | --- |
